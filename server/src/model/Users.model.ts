@@ -19,7 +19,7 @@ const userSchema = new Schema<userType>({
         trim: true,
         match: [/\S+@\S+\.\S+/, "invalid email"],
     },
-    phoneNumber: {
+    Number: {
         type: String,
         unique: true,
         trim: true

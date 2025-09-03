@@ -4,7 +4,7 @@ export interface userType extends Document {
     name: string;
     email: string;
     password?: string;
-    phoneNumber?: string;
+    Number?: string;
     profileImage?: {
         publicId: string;
         imageUrl: string;
