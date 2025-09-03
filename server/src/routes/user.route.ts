@@ -6,7 +6,7 @@ import {
     Logout,
     refreshAccessToken,
     ResendEmailVerificationCode,
-    resetPassword,
+    ResetPassword,
     signin,
     signup,
     updateProfileImage,
@@ -23,7 +23,7 @@ router.post("/verify-email/:id", VerifyEmail);
 router.post("/resend-verification-code/:id", ResendEmailVerificationCode);
 router.post("/forget-password", forgetPassword);
 router.post("/verify-otp/:id", VerifyOtp);
-router.post("/reset-password/:id", resetPassword);
+router.post("/reset-password/:id", ResetPassword);
 router.post("/refresh-token", refreshAccessToken);
 
 router.post("sign-out", auth, Logout);

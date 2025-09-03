@@ -16,7 +16,7 @@ export const auth = asyncHandler(async (req: Request, res: Response, next: NextF
 
     if (!user) return res.status(404).json({ message: "Unathorized access." });
 
-    req.authUser = user;
+    req.auth = user;
 
     return next();
 });

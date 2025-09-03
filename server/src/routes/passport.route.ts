@@ -22,8 +22,7 @@ router.get("/github/callback", passport.authenticate("github", { session: false,
         const accessToken = jwt.sign(
             {
                 id: user.id,
-                email: user.profileInfo.email,
-                username: user.profileInfo.username,
+                email: user.email,
             } as jwtToken,
             process.env.ACCESS_TOKEN_SECRET!,
             {
@@ -34,8 +33,7 @@ router.get("/github/callback", passport.authenticate("github", { session: false,
         const refreshToken = jwt.sign(
             {
                 id: user.id,
-                email: user.profileInfo.email,
-                username: user.profileInfo.username,
+                email: user.email,
             } as jwtToken,
             process.env.REFRESH_TOKEN_SECRET!,
             {
@@ -60,8 +58,7 @@ router.get("/google/callback", passport.authenticate("google", { session: false,
         const accessToken = jwt.sign(
             {
                 id: user.id,
-                email: user.profileInfo.email,
-                username: user.profileInfo.username,
+                email: user.email,
             } as jwtToken,
             process.env.ACCESS_TOKEN_SECRET!,
             {
@@ -72,8 +69,7 @@ router.get("/google/callback", passport.authenticate("google", { session: false,
         const refreshToken = jwt.sign(
             {
                 id: user.id,
-                email: user.profileInfo.email,
-                username: user.profileInfo.username,
+                email: user.email,
             } as jwtToken,
             process.env.REFRESH_TOKEN_SECRET!,
             {
@@ -85,7 +81,7 @@ router.get("/google/callback", passport.authenticate("google", { session: false,
             .status(200)
             .cookie("accessToken", accessToken, option)
             .cookie("refreshToken", refreshToken, option)
-            .redirect(`${process.env.CLIENT_ORIGIN!}/`)
+            .redirect(`${process.env.CLIENT_ORIGIN}/`)
     })
 );
 
