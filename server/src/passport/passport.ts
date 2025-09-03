@@ -20,7 +20,7 @@ passport.use(new GitHubStrategy(
 
             const isUserExists = await Users.findOne({
                 $or: [
-                    { "profileInfo.email": email },
+                    { "email": email },
                     { "githubId": profile.id }
                 ]
             });
@@ -68,7 +68,7 @@ passport.use(new GoogleStrategy(
 
             const isUserExists = await Users.findOne({
                 $or: [
-                    { "profileInfo.email": email },
+                    { "email": email },
                     { "googleId": profile.id }
                 ]
             });
@@ -87,7 +87,6 @@ passport.use(new GoogleStrategy(
             const user = await Users.create({
                 name: profile.displayName || profile.username,
                 email: email,
-                username: profile.username,
                 profileImage: {
                     imageUrl: image
                 },
