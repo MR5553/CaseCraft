@@ -161,7 +161,7 @@ const ResendEmailVerificationCode = asyncHandler(async (req: Request, res: Respo
 });
 
 const Logout = asyncHandler(async (req: Request, res: Response) => {
-    await Users.findByIdAndUpdate(req.authUser.id,
+    await Users.findByIdAndUpdate(req.auth.id,
         {
             $unset: {
                 refreshToken: 1
@@ -205,7 +205,7 @@ const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
 
 const getProfile = asyncHandler(async (req: Request, res: Response) => {
     return res.status(200).json({
-        user: req.authUser,
+        user: req.auth,
         success: true,
         message: "current user fetched successfully."
     });
@@ -217,14 +217,14 @@ const updateProfileImage = asyncHandler(async (req: Request, res: Response) => {
 
     if (!profileImageLocal) return res.status(404).json({ message: "profile image required!.." });
 
-    const oldProfileImage = await Users.findById(req.authUser.id) as userType;
+    const oldProfileImage = await Users.findById(req.auth.id) as userType;
     await deleteFromCloudinary(oldProfileImage.profileImage!.publicId, "image");
 
     const profileImage = await UploadOnCloudinary(profileImageLocal, "image");
 
     if (profileImage.url) throw new apiError(400, "error while uploading image!..");
 
-    const user = await Users.findByIdAndUpdate(req.authUser.id,
+    const user = await Users.findByIdAndUpdate(req.auth.id,
         {
             $set: {
                 profileImage: {
