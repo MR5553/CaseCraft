@@ -2,21 +2,20 @@ import { CookieOptions, Request, Response } from "express";
 import { Users } from "../model/Users.model";
 import { userType } from "../types/user.types";
 import crypto from "node:crypto";
-import { EmailVerification } from "../mail/template.mail";
-import { asyncHandler } from "../utils/asyncHandler";
-import { apiError } from "../utils/apiError";
+// import { EmailVerification } from "../mail/template.mail";
 import { isValidObjectId } from "mongoose";
 import jwt from "jsonwebtoken";
 import { jwtToken } from "../types/jwt.types";
 import { deleteFromCloudinary, UploadOnCloudinary } from "../utils/Cloudinary";
 
 
-const option: CookieOptions = {
+export const option: CookieOptions = {
     httpOnly: true,
     secure: true,
     sameSite: "none",
-    maxAge: 30 * 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
 };
+
 
 export async function generateToken(userId: string) {
     try {
@@ -35,298 +34,489 @@ export async function generateToken(userId: string) {
     }
 };
 
-const signup = asyncHandler(async (req: Request, res: Response) => {
-    const { name, email, password }: userType = req.body;
 
-    if (!name || !email || !password) {
-        return res.status(400).json({ success: false, message: "Name, Email & Password are required." });
+const signup = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { name, email, password }: userType = req.body;
+
+        if (!name || !email || !password) {
+            res.status(400).json({ success: false, message: "Name, Email & Password are required." });
+            return;
+        }
+
+        const existingUser = await Users.findOne({ email });
+
+        if (existingUser) {
+            res.status(409).json({ success: false, message: "User already exists, please signin instead." });
+            return;
+        }
+
+        const verificationCode = crypto.randomInt(100000, 999999);
+
+        const user = await Users.create({
+            name,
+            email,
+            password,
+            verificationCode,
+            verificationCodeExpiry: Date.now() + 60 * 60 * 1000,
+        });
+
+        if (!user) {
+            res.status(500).json({ success: false, message: "Unable to create user." });
+            return;
+        }
+
+        //await EmailVerification(user);
+
+        const new_user = await Users.findById(user.id).select(
+            "-password -refreshToken -verificationCode -verificationCodeExpiry"
+        );
+
+        res.status(201).json({
+            user: new_user,
+            success: true,
+            message: `We just sent a verification mail to ${email}`,
+        });
+
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Internal server error",
+        });
     }
+};
 
-    const isUserExists = await Users.findOne({ "email": email });
 
-    if (isUserExists) {
-        if (isUserExists.isVerified) throw new apiError(409, "User already exists, please signin instead.")
+const signin = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { email, password }: userType = req.body;
 
-        throw new apiError(404, "user already exists, please verify email");
+        if (!email || !password) {
+            res.status(400).json({ success: false, message: "Email and password are required." });
+            return;
+        }
+
+        const existingUser = await Users.findOne({ email }).select("-refreshToken -verificationCode -verificationCodeExpiry");
+
+        if (!existingUser) {
+            res.status(404).json({ success: false, message: "User does not exist, please sign up instead." });
+            return;
+        }
+
+        if (!existingUser.isVerified) {
+            res.status(401).json({ success: false, message: "Please verify your email to continue" });
+            return;
+        }
+
+        if (!existingUser.password) {
+            res.status(400).json({ success: false, message: "Please sign in with your social account" });
+            return;
+        }
+
+        const isPasswordValid = await existingUser.isPasswordCorrect(password);
+
+        if (!isPasswordValid) {
+            res.status(400).json({ success: false, message: "Incorrect password." });
+            return;
+        }
+
+        const { accessToken, refreshToken } = await generateToken(existingUser.id);
+
+        const user = await Users.findById(existingUser.id).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
+
+        res.status(200)
+            .cookie("accessToken", accessToken, option)
+            .cookie("refreshToken", refreshToken, option)
+            .json({
+                success: true,
+                message: "User logged in successfully.",
+                user: user,
+            });
+
+    } catch (error) {
+        res.status(error.statusCode || 500).json({ success: false, message: error.message || "Internal server error" });
     }
+};
 
-    const verificationCode = crypto.randomInt(100000, 999999);
 
-    const user = await Users.create({
-        name,
-        email,
-        password,
-        verificationCode: verificationCode,
-        verificationCodeExpiry: Date.now() + (60 * 60 * 1000)
-    }) as userType;
+const VerifyEmail = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const otp: number = req.body.otp;
 
-    if (!user) throw new apiError(404, "Unable to create user.")
+        if (!otp) {
+            res.status(404).json({ message: "verification code required." });
+            return;
+        }
 
-    await EmailVerification(user);
+        if (!isValidObjectId(req.params.id)) {
+            res.status(409).json({ message: "Invalid user id." });
+            return;
+        }
 
-    const createdUser = await Users.findById(user._id).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
+        const user = await Users.findById(req.params.id).select("-password") as userType;
 
-    return res.status(201).json({
-        user: createdUser,
-        success: true,
-        message: `We just sent a verification mail to ${email}`
-    });
-});
+        if (!user) {
+            res.status(404).json({ message: "User not found." });
+            return;
+        }
 
-const signin = asyncHandler(async (req: Request, res: Response) => {
-    const { email, password }: userType = req.body;
+        if (user.isVerified) {
+            res.status(400).json({ message: "User already verified!.. " });
+            return;
+        }
 
-    if (!email || !password) {
-        return res.status(404).json({ message: "Email and password is required." });
+        if (!user.verificationCodeExpiry || user.verificationCodeExpiry <= new Date()) {
+            res.status(400).json({ message: "Verification code has expired." });
+            return;
+        }
+
+        if (user.verificationCode !== otp) {
+            res.status(400).json({ message: "Invalid verification code." });
+            return;
+        }
+
+        const { accessToken, refreshToken } = await generateToken(user.id);
+
+        user.isVerified = true;
+        user.refreshToken = refreshToken;
+        user.verificationCode = undefined;
+        user.verificationCodeExpiry = undefined;
+        await user.save();
+
+        res.status(200)
+            .cookie("accessToken", accessToken, option)
+            .cookie("refreshToken", refreshToken, option)
+            .json({
+                user,
+                success: true,
+                message: "Email verified successfully",
+            });
+
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Internal server error",
+        });
     }
+};
 
-    const isUserExists = await Users.findOne({ "email": email }).select("-refreshToken -verificationCode -verificationCodeExpiry");
 
-    if (!isUserExists) throw new apiError(404, "user does not exist, signup intead.");
+const resendVerificationCode = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
 
-    if (!isUserExists.isVerified) throw new apiError(401, "Please verify your email to continue.");
+        if (!isValidObjectId(id)) {
+            res.status(400).json({ success: false, message: "Invalid user ID." });
+            return;
+        }
 
-    if (!isUserExists.password) {
-        throw new apiError(400, "Please sign in with your social account.");
+        const verificationCode = crypto.randomInt(100000, 999999);
+
+        const user = await Users.findByIdAndUpdate(id,
+            {
+                verificationCode,
+                verificationCodeExpiry: Date.now() + 60 * 60 * 1000,
+            },
+            { new: true }
+        );
+
+        if (!user) {
+            res.status(404).json({ success: false, message: "User not found." });
+            return;
+        }
+
+        //sent email with verification code
+
+        res.status(200).json({
+            id: user.id,
+            success: true,
+            message: "Verification code sent successfully.",
+        });
+
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Internal server error",
+        });
     }
+};
 
-    const isValidPassword = isUserExists.isPasswordCorrect(password);
 
-    if (!isValidPassword) throw new apiError(400, "Incorrect password.")
+const Logout = async (req: Request, res: Response): Promise<void> => {
+    try {
+        await Users.findByIdAndUpdate(
+            req.auth.id,
+            {
+                $unset: { refreshToken: 1 },
+            },
+            { new: true }
+        );
 
-    const { accessToken, refreshToken } = await generateToken(isUserExists.id);
+        res.status(200)
+            .clearCookie("accessToken", option)
+            .clearCookie("refreshToken", option)
+            .json({
+                success: true,
+                message: "User logged out successfully.",
+            });
 
-    const user = await Users.findById(isUserExists._id).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Internal server error",
+        });
+    }
+};
 
-    return res.status(200)
-        .cookie("accessToken", accessToken, option)
-        .cookie("refreshToken", refreshToken, option)
-        .json({
+
+const refreshAccessToken = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const token = req.cookies.refreshToken || req.body.refreshToken;
+
+        if (!token) {
+            res.status(401).json({ success: false, message: "Unauthorized request!.." });
+            return;
+        }
+
+        const decode = jwt.verify(
+            token,
+            process.env.REFRESH_TOKEN_SECRET!
+        ) as jwtToken;
+
+        const user = await Users.findById(decode.id) as userType;
+
+        if (!user) {
+            res.status(401).json({ success: false, message: "Invalid refresh token!.." });
+            return;
+        }
+
+        if (token !== user.refreshToken) {
+            res.status(401).json({ success: false, message: "Refresh token is expired!.." });
+            return;
+        }
+
+        const { accessToken, refreshToken } = await generateToken(user.id);
+
+        res.status(200)
+            .cookie("accessToken", accessToken, option)
+            .cookie("refreshToken", refreshToken, option)
+            .json({
+                success: true,
+                message: "Access token and refresh token updated successfully!..",
+            });
+
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Internal server error",
+        });
+    }
+};
+
+
+const getProfile = async (req: Request, res: Response): Promise<void> => {
+    try {
+        res.status(200).json({
+            user: req.auth,
+            success: true,
+            message: "current user fetched successfully."
+        });
+
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Internal server error",
+        });
+    }
+};
+
+
+const updateProfileImage = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const profileImageLocal = req.file?.path;
+
+        if (!profileImageLocal) {
+            res.status(400).json({ success: false, message: "Profile image is required." });
+            return;
+        }
+
+        const existingUser = (await Users.findById(req.auth.id)) as userType;
+
+        if (existingUser?.profileImage?.publicId) {
+            await deleteFromCloudinary(existingUser.profileImage.publicId, "image");
+        }
+
+        const uploadedImage = await UploadOnCloudinary(profileImageLocal, "image");
+
+        if (!uploadedImage?.url) {
+            res.status(500).json({ success: false, message: "Error while uploading image." });
+            return;
+        }
+
+        const user = await Users.findByIdAndUpdate(
+            req.auth.id,
+            {
+                $set: {
+                    profileImage: {
+                        imageUrl: uploadedImage.url,
+                        publicId: uploadedImage.public_id,
+                    },
+                },
+            },
+            { new: true }
+        ).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
+
+        res.status(200).json({
             user: user,
             success: true,
-            message: "User Logged in successfully."
+            message: "Profile image updated successfully.",
         });
-});
 
-const VerifyEmail = asyncHandler(async (req: Request, res: Response) => {
-    const otp: number = req.body.otp;
-
-    if (!otp) return res.status(404).json({ message: "verification code required." });
-
-    if (!isValidObjectId(req.params.id)) return res.status(409).json({ message: "Invalid user id." });;
-
-    const user = await Users.findById(req.params.id).select("-password") as userType;
-
-    if (user.isVerified) throw new apiError(400, "user already verified!..")
-
-    if (!user.verificationCodeExpiry || user.verificationCodeExpiry <= new Date()) {
-        throw new apiError(400, "Verification code has expired.");
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Internal server error",
+        });
     }
+};
 
-    if (user.verificationCode !== otp) throw new apiError(400, "Invalid verification code.");
 
-    const { accessToken, refreshToken } = await generateToken(user.id);
+const forgetPassword = async (req: Request, res: Response) => {
+    try {
+        const email = req.body.email;
 
-    user.isVerified = true;
-    user.refreshToken = refreshToken;
-    user.verificationCode = undefined;
-    user.verificationCodeExpiry = undefined;
-    await user.save();
+        if (!email) {
+            res.status(400).json({ success: false, message: "email is required!.." });
+            return;
+        }
 
-    return res.status(200)
-        .cookie("accessToken", accessToken, option)
-        .cookie("refreshToken", refreshToken, option)
-        .json({
-            user: user,
+        const user = await Users.findOne({ email });
+
+        if (!user) {
+            res.status(404).json({ success: false, message: "user does not exist!.." });
+            return;
+        }
+
+        const verificationCode = crypto.randomInt(100000, 999999);
+        user.verificationCode = verificationCode;
+        user.verificationCodeExpiry = new Date(Date.now() + 10 * 60 * 1000);
+        await user.save();
+
+        // send email with verificationCode...
+
+        res.status(200).json({
             success: true,
-            message: "email verified successfully"
+            id: user.id,
+            email: user.email,
+            message: `OTP sent to ${user.email}`,
         });
-});
 
-const ResendEmailVerificationCode = asyncHandler(async (req: Request, res: Response) => {
-    if (!isValidObjectId(req.params.id)) throw new apiError(400, "Invalid user id");
-
-    const verificationCode = crypto.randomInt(100000, 999999);
-
-    const user = await Users.findByIdAndUpdate(req.params.id, {
-        verificationCode: verificationCode,
-        verificationCodeExpiry: Date.now() + (60 * 60 * 1000)
-    }) as userType;
-
-    return res.status(200).json({
-        id: user.id,
-        success: true,
-        message: "verification code sent successfully",
-    });
-});
-
-const Logout = asyncHandler(async (req: Request, res: Response) => {
-    await Users.findByIdAndUpdate(req.auth.id,
-        {
-            $unset: {
-                refreshToken: 1
-            }
-        },
-        { new: true }
-    );
-
-    return res.status(200)
-        .clearCookie("accessToken", option)
-        .clearCookie("refreshToken", option)
-        .json({
-            sucsess: true,
-            message: "user logout successfully."
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Internal server error",
         });
-});
+    }
+};
 
-const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
-    const recieveToken = req.cookies.refreshToken || req.body.refreshToken;
 
-    if (!recieveToken) throw new apiError(401, "unathorized requiest!..");
+const verifyOtp = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { otp } = req.body;
 
-    const decodeToken = await jwt.verify(recieveToken, process.env.REFRESH_TOKEN_SECRET!) as jwtToken;
+        if (!otp) {
+            res.status(400).json({ success: false, message: "OTP is required." });
+            return;
+        }
 
-    const user = await Users.findById(decodeToken._id) as userType;
+        const user = (await Users.findById(req.params.id)) as userType;
 
-    if (!user) throw new apiError(401, "invalid refresh token!..");
+        if (!user) {
+            res.status(404).json({ success: false, message: "User not found." });
+            return;
+        }
 
-    if (recieveToken !== user.refreshToken) throw new apiError(401, "refresh token is expired!..");
+        if (user.verificationCode !== otp) {
+            res.status(400).json({ success: false, message: "Invalid OTP." });
+            return;
+        }
 
-    const { accessToken, refreshToken } = await generateToken(user.id);
+        if (!user.verificationCodeExpiry || new Date(user.verificationCodeExpiry) <= new Date()) {
+            res.status(400).json({ success: false, message: "OTP has expired." });
+            return;
+        }
 
-    return res.status(200)
-        .cookie("accessToken", accessToken, option)
-        .cookie("refreshToken", refreshToken, option)
-        .json({
+        user.verificationCode = undefined;
+        user.verificationCodeExpiry = undefined;
+        await user.save();
+
+        const updatedUser = await Users.findById(user.id).select(
+            "-password -refreshToken -verificationCode -verificationCodeExpiry"
+        );
+
+        res.status(200).json({
+            user: updatedUser,
             success: true,
-            message: "access token and refreshToken update successfully!.."
+            message: "OTP verified successfully.",
         });
-});
-
-const getProfile = asyncHandler(async (req: Request, res: Response) => {
-    return res.status(200).json({
-        user: req.auth,
-        success: true,
-        message: "current user fetched successfully."
-    });
-});
-
-
-const updateProfileImage = asyncHandler(async (req: Request, res: Response) => {
-    const profileImageLocal = req.file?.path;
-
-    if (!profileImageLocal) return res.status(404).json({ message: "profile image required!.." });
-
-    const oldProfileImage = await Users.findById(req.auth.id) as userType;
-    await deleteFromCloudinary(oldProfileImage.profileImage!.publicId, "image");
-
-    const profileImage = await UploadOnCloudinary(profileImageLocal, "image");
-
-    if (profileImage.url) throw new apiError(400, "error while uploading image!..");
-
-    const user = await Users.findByIdAndUpdate(req.auth.id,
-        {
-            $set: {
-                profileImage: {
-                    imageUrl: profileImage.url,
-                    publicId: profileImage.public_id
-                }
-            }
-        }, { new: true }
-    ).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
-
-    return res.status(200).json({
-        user: user,
-        success: true,
-        message: "profile image updated!.."
-    });
-});
-
-const forgetPassword = asyncHandler(async (req: Request, res: Response) => {
-    const { email }: userType = req.body;
-
-    if (!email) return res.status(400).json({ message: "email is required!.." });
-
-    const user = await Users.findOne({ "email": email }) as userType;
-
-    if (!user) throw new apiError(404, "user does not exists!..");
-
-    const verificationCode = crypto.randomInt(100000, 999999);
-
-    user.verificationCode = verificationCode;
-    user.verificationCodeExpiry = new Date(Date.now() + (10 * 60 * 1000));
-    await user.save();
-
-    //sent email with verification code and all
-
-    return res.status(200).json({
-        id: user.id,
-        success: true,
-        message: `otp sent to ${user.email}`
-    });
-});
-
-const VerifyOtp = asyncHandler(async (req: Request, res: Response) => {
-    const otp: number = req.body.otp;
-
-    if (!otp) return res.status(400).json({ message: "Otp is missing" });
-
-    const user = await Users.findById(req.params.id) as userType;
-
-    if (!user || user.verificationCode !== otp) {
-        throw new apiError(400, "invalid Otp!..");
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Internal server error",
+        });
     }
+};
 
-    if (!user.verificationCodeExpiry || new Date(user.verificationCodeExpiry) <= new Date()) {
-        throw new apiError(400, "Verification code has expired.");
+
+const resetPassword = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { password } = req.body;
+        const { id } = req.params;
+
+        if (!isValidObjectId(id)) {
+            res.status(400).json({ success: false, message: "Invalid user ID." });
+            return;
+        }
+
+        if (!password) {
+            res.status(400).json({ success: false, message: "Password is required." });
+            return;
+        }
+
+        const user = await Users.findByIdAndUpdate(
+            id,
+            { $set: { password } },
+            { new: true }
+        ).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
+
+        if (!user) {
+            res.status(404).json({ success: false, message: "User not found or error while resetting password." });
+            return;
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Password reset successfully.",
+        });
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Internal server error",
+        });
     }
+};
 
-    user.verificationCode = undefined;
-    user.verificationCodeExpiry = undefined;
-    await user.save();
-
-    const upadatedUser = await Users.findById(user.id).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
-
-    return res.status(200).json({
-        user: upadatedUser,
-        success: true,
-        message: "Otp verified successfully."
-    });
-});
-
-const ResetPassword = asyncHandler(async (req: Request, res: Response) => {
-    const password: string = req.body.password;
-
-    if (!isValidObjectId(req.params.id)) return res.status(400).json({ message: "user id is not valid!.." });
-    if (!password) return res.status(400).json({ message: "password is required!.." });
-
-    const user = await Users.findByIdAndUpdate(req.params.id,
-        {
-            $set: {
-                password: password
-            }
-        },
-        { new: true }
-    ).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
-
-    if (!user) return res.status(400).json({ message: "error while resetting password!.." });
-
-    return res.status(200).json({
-        success: true,
-        message: "password reset succesfully."
-    });
-});
 
 export {
     forgetPassword,
     getProfile,
     Logout,
     refreshAccessToken,
-    ResendEmailVerificationCode,
-    ResetPassword,
+    resendVerificationCode,
+    resetPassword,
     signin,
     signup,
     updateProfileImage,
     VerifyEmail,
-    VerifyOtp
+    verifyOtp
 };

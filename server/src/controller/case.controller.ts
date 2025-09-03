@@ -1,24 +1,37 @@
 import { Request, Response } from "express";
-import { asyncHandler } from "../utils/asyncHandler";
-import { apiError } from "../utils/apiError";
 import { UploadOnCloudinary } from "../utils/Cloudinary";
 
-const uploadImage = asyncHandler(async (req: Request, res: Response) => {
-    const image = req.file?.path;
 
-    if (!image) throw new apiError(400, "No image file provided in the request.");
+const uploadImage = async (req: Request, res: Response) => {
+    try {
+        const image = req.file?.path;
 
-    const result = await UploadOnCloudinary(image, "image");
+        if (!image) {
+            res.status(404).json({ success: false, message: "No image file provided in the request." });
+            return;
+        }
 
-    if (!result.url) throw new apiError(500, "Failed to upload image to Cloudinary.");
+        const result = await UploadOnCloudinary(image, "image");
 
-    return res.status(201).json({
-        url: result.url,
-        publicId: result.public_id,
-        success: true,
-        message: "Image is uploaded successful.",
-    });
-});
+        if (!result.url) {
+            res.status(500).json({ success: false, message: "Failed to upload image to Cloudinary." });
+            return;
+        }
+
+        res.status(201).json({
+            url: result.url,
+            publicId: result.public_id,
+            success: true,
+            message: "Image is uploaded successful.",
+        });
+
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Internal server error",
+        });
+    }
+};
 
 
 export { uploadImage };

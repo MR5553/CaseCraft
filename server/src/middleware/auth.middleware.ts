@@ -2,21 +2,37 @@ import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { Users } from "../model/Users.model";
 import { jwtToken } from "../types/jwt.types";
-import { asyncHandler } from "../utils/asyncHandler";
 
 
-export const auth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer", " ");
+export const verifyJwtToken = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
 
-    if (!token) return res.status(400).json({ message: "No token found, Sign-in instead." });
+        if (!token) {
+            res.status(400).json({ success: false, message: "No token found, please sign in." });
+            return;
+        }
 
-    const decodedToken = await jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!) as jwtToken;
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!) as jwtToken;
 
-    const user = await Users.findById(decodedToken.id).select("-profileInfo.password -refreshToken");
+        const user = await Users.findById(decoded.id).select("-password -refreshToken");
 
-    if (!user) return res.status(404).json({ message: "Unathorized access." });
+        if (!user) {
+            res.status(404).json({ success: false, message: "Unauthorized access." });
+            return;
+        }
 
-    req.auth = user;
+        req.auth = user;
 
-    return next();
-});
+        return next();
+
+    } catch (error) {
+        res.status(401).json({
+            success: false,
+            message:
+                error.name === "TokenExpiredError"
+                    ? "Session expired, please sign in again."
+                    : "Invalid token, authentication failed.",
+        });
+    }
+};
