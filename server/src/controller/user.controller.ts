@@ -2,7 +2,7 @@ import { CookieOptions, Request, Response } from "express";
 import { Users } from "../model/Users.model";
 import { userType } from "../types/user.types";
 import crypto from "node:crypto";
-import { EmailVerification, ResetPassword } from "../mail/template.mail";
+import { EmailVerification } from "../mail/template.mail";
 import { asyncHandler } from "../utils/asyncHandler";
 import { apiError } from "../utils/apiError";
 import { isValidObjectId } from "mongoose";
@@ -36,13 +36,13 @@ export async function generateToken(userId: string) {
 };
 
 const signup = asyncHandler(async (req: Request, res: Response) => {
-    const { name, email, password }: userType["profileInfo"] = req.body;
+    const { name, email, password }: userType = req.body;
 
     if (!name || !email || !password) {
         return res.status(400).json({ success: false, message: "Name, Email & Password are required." });
     }
 
-    const isUserExists = await Users.findOne({ "profileInfo.email": email });
+    const isUserExists = await Users.findOne({ "email": email });
 
     if (isUserExists) {
         if (isUserExists.isVerified) throw new apiError(409, "User already exists, please signin instead.")
@@ -53,12 +53,9 @@ const signup = asyncHandler(async (req: Request, res: Response) => {
     const verificationCode = crypto.randomInt(100000, 999999);
 
     const user = await Users.create({
-        profileInfo: {
-            name,
-            email,
-            username: email.split("@")[0].toLowerCase(),
-            password
-        },
+        name,
+        email,
+        password,
         verificationCode: verificationCode,
         verificationCodeExpiry: Date.now() + (60 * 60 * 1000)
     }) as userType;
@@ -67,7 +64,7 @@ const signup = asyncHandler(async (req: Request, res: Response) => {
 
     await EmailVerification(user);
 
-    const createdUser = await Users.findById(user._id).select("-profileInfo.password -refreshToken -verificationCode -verificationCodeExpiry");
+    const createdUser = await Users.findById(user._id).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
 
     return res.status(201).json({
         user: createdUser,
@@ -77,19 +74,19 @@ const signup = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const signin = asyncHandler(async (req: Request, res: Response) => {
-    const { email, password }: userType["profileInfo"] = req.body;
+    const { email, password }: userType = req.body;
 
     if (!email || !password) {
         return res.status(404).json({ message: "Email and password is required." });
     }
 
-    const isUserExists = await Users.findOne({ "profileInfo.email": email }).select("-refreshToken -verificationCode -verificationCodeExpiry");
+    const isUserExists = await Users.findOne({ "email": email }).select("-refreshToken -verificationCode -verificationCodeExpiry");
 
     if (!isUserExists) throw new apiError(404, "user does not exist, signup intead.");
 
     if (!isUserExists.isVerified) throw new apiError(401, "Please verify your email to continue.");
 
-    if (!isUserExists.profileInfo.password) {
+    if (!isUserExists.password) {
         throw new apiError(400, "Please sign in with your social account.");
     }
 
@@ -97,9 +94,9 @@ const signin = asyncHandler(async (req: Request, res: Response) => {
 
     if (!isValidPassword) throw new apiError(400, "Incorrect password.")
 
-    const { accessToken, refreshToken } = await generateToken(String(isUserExists._id));
+    const { accessToken, refreshToken } = await generateToken(isUserExists.id);
 
-    const user = await Users.findById(isUserExists._id).select("-profileInfo.password -refreshToken -verificationCode -verificationCodeExpiry");
+    const user = await Users.findById(isUserExists._id).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
 
     return res.status(200)
         .cookie("accessToken", accessToken, option)
@@ -118,7 +115,7 @@ const VerifyEmail = asyncHandler(async (req: Request, res: Response) => {
 
     if (!isValidObjectId(req.params.id)) return res.status(409).json({ message: "Invalid user id." });;
 
-    const user = await Users.findById(req.params.id).select("-profileInfo.password") as userType;
+    const user = await Users.findById(req.params.id).select("-password") as userType;
 
     if (user.isVerified) throw new apiError(400, "user already verified!..")
 
@@ -221,7 +218,7 @@ const updateProfileImage = asyncHandler(async (req: Request, res: Response) => {
     if (!profileImageLocal) return res.status(404).json({ message: "profile image required!.." });
 
     const oldProfileImage = await Users.findById(req.authUser.id) as userType;
-    await deleteFromCloudinary(oldProfileImage.profileInfo.profileImage.publicId, "image");
+    await deleteFromCloudinary(oldProfileImage.profileImage!.publicId, "image");
 
     const profileImage = await UploadOnCloudinary(profileImageLocal, "image");
 
@@ -230,15 +227,13 @@ const updateProfileImage = asyncHandler(async (req: Request, res: Response) => {
     const user = await Users.findByIdAndUpdate(req.authUser.id,
         {
             $set: {
-                profileInfo: {
-                    profileImage: {
-                        imageUrl: profileImage.url,
-                        publicId: profileImage.public_id
-                    }
+                profileImage: {
+                    imageUrl: profileImage.url,
+                    publicId: profileImage.public_id
                 }
             }
         }, { new: true }
-    ).select("-profileInfo.password -refreshToken -verificationCode -verificationCodeExpiry");
+    ).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
 
     return res.status(200).json({
         user: user,
@@ -248,11 +243,11 @@ const updateProfileImage = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const forgetPassword = asyncHandler(async (req: Request, res: Response) => {
-    const { email }: userType["profileInfo"] = req.body;
+    const { email }: userType = req.body;
 
     if (!email) return res.status(400).json({ message: "email is required!.." });
 
-    const user = await Users.findOne({ "profileInfo.email": email }) as userType;
+    const user = await Users.findOne({ "email": email }) as userType;
 
     if (!user) throw new apiError(404, "user does not exists!..");
 
@@ -262,12 +257,12 @@ const forgetPassword = asyncHandler(async (req: Request, res: Response) => {
     user.verificationCodeExpiry = new Date(Date.now() + (10 * 60 * 1000));
     await user.save();
 
-    await ResetPassword(user);
+    //sent email with verification code and all
 
     return res.status(200).json({
         id: user.id,
         success: true,
-        message: `otp sent to ${user.profileInfo.email}`
+        message: `otp sent to ${user.email}`
     });
 });
 
@@ -290,7 +285,7 @@ const VerifyOtp = asyncHandler(async (req: Request, res: Response) => {
     user.verificationCodeExpiry = undefined;
     await user.save();
 
-    const upadatedUser = await Users.findById(user.id).select("-profileInfo.password -refreshToken -verificationCode -verificationCodeExpiry");
+    const upadatedUser = await Users.findById(user.id).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
 
     return res.status(200).json({
         user: upadatedUser,
@@ -299,7 +294,7 @@ const VerifyOtp = asyncHandler(async (req: Request, res: Response) => {
     });
 });
 
-const resetPassword = asyncHandler(async (req: Request, res: Response) => {
+const ResetPassword = asyncHandler(async (req: Request, res: Response) => {
     const password: string = req.body.password;
 
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ message: "user id is not valid!.." });
@@ -308,13 +303,11 @@ const resetPassword = asyncHandler(async (req: Request, res: Response) => {
     const user = await Users.findByIdAndUpdate(req.params.id,
         {
             $set: {
-                profileInfo: {
-                    password: password
-                }
+                password: password
             }
         },
         { new: true }
-    ).select("-profileInfo.password -refreshToken -verificationCode -verificationCodeExpiry");
+    ).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
 
     if (!user) return res.status(400).json({ message: "error while resetting password!.." });
 
@@ -330,7 +323,7 @@ export {
     Logout,
     refreshAccessToken,
     ResendEmailVerificationCode,
-    resetPassword,
+    ResetPassword,
     signin,
     signup,
     updateProfileImage,

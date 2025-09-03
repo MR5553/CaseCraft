@@ -4,7 +4,7 @@ import { transporter } from "./mail";
 export const EmailVerification = async (user: userType) => {
     const info = await transporter.sendMail({
         from: "Playsync",
-        to: user.profileInfo.email,
+        to: user.email,
         subject: "Verify your account",
         html: `
         <div
@@ -43,7 +43,7 @@ export const EmailVerification = async (user: userType) => {
 export const ResetPassword = async (user: userType) => {
     const info = await transporter.sendMail({
         from: "Playsync",
-        to: user.profileInfo.email,
+        to: user.email,
         subject: "Reset password",
         html: `
         <div style="font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; background-color: #f7f7f8; max-width: 600px; margin: 0 auto; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
