@@ -1,9 +1,9 @@
 {
-  "name": "playsync",
-  "version": "1.0.0",
+  "name": "casecraft-api",
+  "version": "0.1.0",
   "description": "video stream platform backend",
   "keywords": [
-    "playSync",
+    "CaseCraft",
     "backend"
   ],
   "license": "ISC",
