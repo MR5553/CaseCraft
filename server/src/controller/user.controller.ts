@@ -30,25 +30,23 @@ export async function generateToken(userId: string) {
         return { refreshToken, accessToken };
 
     } catch (error) {
-        throw error("Something went wrong while generating refresh and access token", error);
+        throw new Error(`Token generation failed: ${(error as Error).message}`);
     }
 };
 
 
-const signup = async (req: Request, res: Response): Promise<void> => {
+const signup = async (req: Request, res: Response) => {
     try {
         const { name, email, password }: userType = req.body;
 
         if (!name || !email || !password) {
-            res.status(400).json({ success: false, message: "Name, Email & Password are required." });
-            return;
+            return res.status(400).json({ success: false, message: "Name, Email & Password are required." });
         }
 
-        const existingUser = await Users.findOne({ email });
+        const existingUser = await Users.findOne({ email: email });
 
         if (existingUser) {
-            res.status(409).json({ success: false, message: "User already exists, please signin instead." });
-            return;
+            return res.status(409).json({ success: false, message: "User already exists, please signin instead." });
         }
 
         const verificationCode = crypto.randomInt(100000, 999999);
@@ -62,8 +60,7 @@ const signup = async (req: Request, res: Response): Promise<void> => {
         });
 
         if (!user) {
-            res.status(500).json({ success: false, message: "Unable to create user." });
-            return;
+            return res.status(500).json({ success: false, message: "Unable to create user." });
         }
 
         //await EmailVerification(user);
@@ -72,59 +69,51 @@ const signup = async (req: Request, res: Response): Promise<void> => {
             "-password -refreshToken -verificationCode -verificationCodeExpiry"
         );
 
-        res.status(201).json({
+        return res.status(201).json({
             user: new_user,
             success: true,
             message: `We just sent a verification mail to ${email}`,
         });
 
     } catch (error) {
-        res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Internal server error",
-        });
+        return res.status(500).json({ sucess: false, error: (error as Error).message });
     }
 };
 
 
-const signin = async (req: Request, res: Response): Promise<void> => {
+const signin = async (req: Request, res: Response) => {
     try {
         const { email, password }: userType = req.body;
 
         if (!email || !password) {
-            res.status(400).json({ success: false, message: "Email and password are required." });
-            return;
+            return res.status(400).json({ success: false, message: "Email and password are required." });
         }
 
-        const existingUser = await Users.findOne({ email }).select("-refreshToken -verificationCode -verificationCodeExpiry");
+        const existingUser = await Users.findOne({ email: email }).select("-refreshToken -verificationCode -verificationCodeExpiry") as userType;
 
         if (!existingUser) {
-            res.status(404).json({ success: false, message: "User does not exist, please sign up instead." });
-            return;
+            res.status(404).json({ success: false, message: "User does not exist, please sign up instead.return " });
         }
 
         if (!existingUser.isVerified) {
-            res.status(401).json({ success: false, message: "Please verify your email to continue" });
-            return;
+            return res.status(401).json({ success: false, message: "Please verify your email to continue" });
         }
 
         if (!existingUser.password) {
-            res.status(400).json({ success: false, message: "Please sign in with your social account" });
-            return;
+            return res.status(400).json({ success: false, message: "Please sign in with your social account" });
         }
 
         const isPasswordValid = await existingUser.isPasswordCorrect(password);
 
         if (!isPasswordValid) {
-            res.status(400).json({ success: false, message: "Incorrect password." });
-            return;
+            return res.status(400).json({ success: false, message: "Incorrect password." });
         }
 
         const { accessToken, refreshToken } = await generateToken(existingUser.id);
 
         const user = await Users.findById(existingUser.id).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
 
-        res.status(200)
+        return res.status(200)
             .cookie("accessToken", accessToken, option)
             .cookie("refreshToken", refreshToken, option)
             .json({
@@ -134,45 +123,39 @@ const signin = async (req: Request, res: Response): Promise<void> => {
             });
 
     } catch (error) {
-        res.status(error.statusCode || 500).json({ success: false, message: error.message || "Internal server error" });
+        return res.status(500).json({ sucess: false, error: (error as Error).message });
     }
 };
 
 
-const VerifyEmail = async (req: Request, res: Response): Promise<void> => {
+const VerifyEmail = async (req: Request, res: Response) => {
     try {
         const otp: number = req.body.otp;
 
         if (!otp) {
-            res.status(404).json({ message: "verification code required." });
-            return;
+            return res.status(404).json({ message: "verification code required." });
         }
 
         if (!isValidObjectId(req.params.id)) {
-            res.status(409).json({ message: "Invalid user id." });
-            return;
+            return res.status(409).json({ message: "Invalid user id." });
         }
 
         const user = await Users.findById(req.params.id).select("-password") as userType;
 
         if (!user) {
-            res.status(404).json({ message: "User not found." });
-            return;
+            return res.status(404).json({ message: "User not found." });
         }
 
         if (user.isVerified) {
-            res.status(400).json({ message: "User already verified!.. " });
-            return;
+            return res.status(400).json({ message: "User already verified!.. " });
         }
 
         if (!user.verificationCodeExpiry || user.verificationCodeExpiry <= new Date()) {
-            res.status(400).json({ message: "Verification code has expired." });
-            return;
+            return res.status(400).json({ message: "Verification code has expired." });
         }
 
         if (user.verificationCode !== otp) {
-            res.status(400).json({ message: "Invalid verification code." });
-            return;
+            return res.status(400).json({ message: "Invalid verification code." });
         }
 
         const { accessToken, refreshToken } = await generateToken(user.id);
@@ -183,7 +166,7 @@ const VerifyEmail = async (req: Request, res: Response): Promise<void> => {
         user.verificationCodeExpiry = undefined;
         await user.save();
 
-        res.status(200)
+        return res.status(200)
             .cookie("accessToken", accessToken, option)
             .cookie("refreshToken", refreshToken, option)
             .json({
@@ -193,21 +176,17 @@ const VerifyEmail = async (req: Request, res: Response): Promise<void> => {
             });
 
     } catch (error) {
-        res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Internal server error",
-        });
+        return res.status(500).json({ sucess: false, error: (error as Error).message });
     }
 };
 
 
-const resendVerificationCode = async (req: Request, res: Response): Promise<void> => {
+const resendVerificationCode = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
         if (!isValidObjectId(id)) {
-            res.status(400).json({ success: false, message: "Invalid user ID." });
-            return;
+            return res.status(400).json({ success: false, message: "Invalid user ID." });
         }
 
         const verificationCode = crypto.randomInt(100000, 999999);
@@ -221,28 +200,24 @@ const resendVerificationCode = async (req: Request, res: Response): Promise<void
         );
 
         if (!user) {
-            res.status(404).json({ success: false, message: "User not found." });
-            return;
+            return res.status(404).json({ success: false, message: "User not found." });
         }
 
         //sent email with verification code
 
-        res.status(200).json({
+        return res.status(200).json({
             id: user.id,
             success: true,
             message: "Verification code sent successfully.",
         });
 
     } catch (error) {
-        res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Internal server error",
-        });
+        return res.status(500).json({ sucess: false, error: (error as Error).message });
     }
 };
 
 
-const Logout = async (req: Request, res: Response): Promise<void> => {
+const Logout = async (req: Request, res: Response) => {
     try {
         await Users.findByIdAndUpdate(
             req.auth.id,
@@ -252,7 +227,7 @@ const Logout = async (req: Request, res: Response): Promise<void> => {
             { new: true }
         );
 
-        res.status(200)
+        return res.status(200)
             .clearCookie("accessToken", option)
             .clearCookie("refreshToken", option)
             .json({
@@ -261,24 +236,20 @@ const Logout = async (req: Request, res: Response): Promise<void> => {
             });
 
     } catch (error) {
-        res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Internal server error",
-        });
+        return res.status(500).json({ sucess: false, error: (error as Error).message });
     }
 };
 
 
-const refreshAccessToken = async (req: Request, res: Response): Promise<void> => {
+const refreshAccessToken = async (req: Request, res: Response) => {
     try {
         const token = req.cookies.refreshToken || req.body.refreshToken;
 
         if (!token) {
-            res.status(401).json({ success: false, message: "Unauthorized request!.." });
-            return;
+            return res.status(401).json({ success: false, message: "Unauthorized request!.." });
         }
 
-        const decode = jwt.verify(
+        const decode = await jwt.verify(
             token,
             process.env.REFRESH_TOKEN_SECRET!
         ) as jwtToken;
@@ -286,18 +257,16 @@ const refreshAccessToken = async (req: Request, res: Response): Promise<void> =>
         const user = await Users.findById(decode.id) as userType;
 
         if (!user) {
-            res.status(401).json({ success: false, message: "Invalid refresh token!.." });
-            return;
+            return res.status(401).json({ success: false, message: "Invalid refresh token!.." });
         }
 
         if (token !== user.refreshToken) {
-            res.status(401).json({ success: false, message: "Refresh token is expired!.." });
-            return;
+            return res.status(401).json({ success: false, message: "Refresh token is expired!.." });
         }
 
         const { accessToken, refreshToken } = await generateToken(user.id);
 
-        res.status(200)
+        return res.status(200)
             .cookie("accessToken", accessToken, option)
             .cookie("refreshToken", refreshToken, option)
             .json({
@@ -306,41 +275,34 @@ const refreshAccessToken = async (req: Request, res: Response): Promise<void> =>
             });
 
     } catch (error) {
-        res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Internal server error",
-        });
+        return res.status(500).json({ sucess: false, error: (error as Error).message });
     }
 };
 
 
-const getProfile = async (req: Request, res: Response): Promise<void> => {
+const getProfile = async (req: Request, res: Response) => {
     try {
-        res.status(200).json({
+        return res.status(200).json({
             user: req.auth,
             success: true,
             message: "current user fetched successfully."
         });
 
     } catch (error) {
-        res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Internal server error",
-        });
+        return res.status(500).json({ sucess: false, error: (error as Error).message });
     }
 };
 
 
-const updateProfileImage = async (req: Request, res: Response): Promise<void> => {
+const updateProfileImage = async (req: Request, res: Response) => {
     try {
         const profileImageLocal = req.file?.path;
 
         if (!profileImageLocal) {
-            res.status(400).json({ success: false, message: "Profile image is required." });
-            return;
+            return res.status(400).json({ success: false, message: "Profile image is required." });
         }
 
-        const existingUser = (await Users.findById(req.auth.id)) as userType;
+        const existingUser = await Users.findById(req.auth.id);
 
         if (existingUser?.profileImage?.publicId) {
             await deleteFromCloudinary(existingUser.profileImage.publicId, "image");
@@ -349,8 +311,7 @@ const updateProfileImage = async (req: Request, res: Response): Promise<void> =>
         const uploadedImage = await UploadOnCloudinary(profileImageLocal, "image");
 
         if (!uploadedImage?.url) {
-            res.status(500).json({ success: false, message: "Error while uploading image." });
-            return;
+            return res.status(500).json({ success: false, message: "Error while uploading image." });
         }
 
         const user = await Users.findByIdAndUpdate(
@@ -366,17 +327,14 @@ const updateProfileImage = async (req: Request, res: Response): Promise<void> =>
             { new: true }
         ).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
 
-        res.status(200).json({
+        return res.status(200).json({
             user: user,
             success: true,
             message: "Profile image updated successfully.",
         });
 
     } catch (error) {
-        res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Internal server error",
-        });
+        return res.status(500).json({ sucess: false, error: (error as Error).message });
     }
 };
 
@@ -386,15 +344,13 @@ const forgetPassword = async (req: Request, res: Response) => {
         const email = req.body.email;
 
         if (!email) {
-            res.status(400).json({ success: false, message: "email is required!.." });
-            return;
+            return res.status(400).json({ success: false, message: "email is required!.." });
         }
 
-        const user = await Users.findOne({ email });
+        const user = await Users.findOne({ email: email });
 
         if (!user) {
-            res.status(404).json({ success: false, message: "user does not exist!.." });
-            return;
+            return res.status(404).json({ success: false, message: "user does not exist!.." });
         }
 
         const verificationCode = crypto.randomInt(100000, 999999);
@@ -404,7 +360,7 @@ const forgetPassword = async (req: Request, res: Response) => {
 
         // send email with verificationCode...
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             id: user.id,
             email: user.email,
@@ -412,38 +368,31 @@ const forgetPassword = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Internal server error",
-        });
+        return res.status(500).json({ sucess: false, error: (error as Error).message });
     }
 };
 
 
-const verifyOtp = async (req: Request, res: Response): Promise<void> => {
+const verifyOtp = async (req: Request, res: Response) => {
     try {
         const { otp } = req.body;
 
         if (!otp) {
-            res.status(400).json({ success: false, message: "OTP is required." });
-            return;
+            return res.status(400).json({ success: false, message: "OTP is required." });
         }
 
         const user = (await Users.findById(req.params.id)) as userType;
 
         if (!user) {
-            res.status(404).json({ success: false, message: "User not found." });
-            return;
+            return res.status(404).json({ success: false, message: "User not found." });
         }
 
         if (user.verificationCode !== otp) {
-            res.status(400).json({ success: false, message: "Invalid OTP." });
-            return;
+            return res.status(400).json({ success: false, message: "Invalid OTP." });
         }
 
         if (!user.verificationCodeExpiry || new Date(user.verificationCodeExpiry) <= new Date()) {
-            res.status(400).json({ success: false, message: "OTP has expired." });
-            return;
+            return res.status(400).json({ success: false, message: "OTP has expired." });
         }
 
         user.verificationCode = undefined;
@@ -454,33 +403,29 @@ const verifyOtp = async (req: Request, res: Response): Promise<void> => {
             "-password -refreshToken -verificationCode -verificationCodeExpiry"
         );
 
-        res.status(200).json({
+        return res.status(200).json({
             user: updatedUser,
             success: true,
             message: "OTP verified successfully.",
         });
+
     } catch (error) {
-        res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Internal server error",
-        });
+        return res.status(500).json({ sucess: false, error: (error as Error).message });
     }
 };
 
 
-const resetPassword = async (req: Request, res: Response): Promise<void> => {
+const resetPassword = async (req: Request, res: Response) => {
     try {
         const { password } = req.body;
         const { id } = req.params;
 
         if (!isValidObjectId(id)) {
-            res.status(400).json({ success: false, message: "Invalid user ID." });
-            return;
+            return res.status(400).json({ success: false, message: "Invalid user ID." });
         }
 
         if (!password) {
-            res.status(400).json({ success: false, message: "Password is required." });
-            return;
+            return res.status(400).json({ success: false, message: "Password is required." });
         }
 
         const user = await Users.findByIdAndUpdate(
@@ -490,19 +435,16 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
         ).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
 
         if (!user) {
-            res.status(404).json({ success: false, message: "User not found or error while resetting password." });
-            return;
+            return res.status(404).json({ success: false, message: "User not found or error while resetting password." });
         }
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             message: "Password reset successfully.",
         });
+
     } catch (error) {
-        res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Internal server error",
-        });
+        return res.status(500).json({ success: false, error: (error as Error).message });
     }
 };
 
