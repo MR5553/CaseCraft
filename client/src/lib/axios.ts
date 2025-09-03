@@ -1,0 +1,39 @@
+import axios from "axios";
+import { AxiosError } from "axios";
+import { toast } from "sonner";
+
+declare module "axios" { interface AxiosRequestConfig { _retry?: boolean; } }
+
+export const api = axios.create({
+    baseURL: import.meta.env.VITE_SERVER_URL,
+    withCredentials: true,
+    timeout: 50000
+});
+
+api.interceptors.response.use((res) => res,
+    async (error: AxiosError) => {
+        const status = error.response?.status;
+        const originalRequest = error.config;
+
+        if (status === 401 && originalRequest && !originalRequest._retry) {
+            originalRequest._retry = true;
+
+            try {
+                await axios.get(`${import.meta.env.VITE_SERVER_URL}/api/auth/refresh-token`, {
+                    withCredentials: true
+                });
+
+                return api(originalRequest);
+            } catch (refreshError) {
+                window.location.href = "/sign-in";
+                return Promise.reject(refreshError);
+            }
+        }
+
+        if (!error.response) {
+            toast.error("Network error or server is unreachable");
+        }
+
+        return Promise.reject(error);
+    }
+);

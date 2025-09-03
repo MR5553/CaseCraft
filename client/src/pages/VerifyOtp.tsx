@@ -40,7 +40,7 @@ export default function VerifyOtp() {
                     Didn't get the code?
                     <Button
                         variant="link"
-                        className="ml-2"
+                        className="w-min ml-2"
 
                     >
                         {"Resend it."}

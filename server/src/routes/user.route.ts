@@ -3,15 +3,12 @@ import { auth } from "../middleware/auth.middleware";
 import {
     forgetPassword,
     getProfile,
-    getWatchHistory,
     Logout,
     refreshAccessToken,
     ResendEmailVerificationCode,
     resetPassword,
-    setUsername,
     signin,
     signup,
-    updateAccountDetails,
     updateProfileImage,
     VerifyEmail,
     VerifyOtp
@@ -31,9 +28,6 @@ router.post("/refresh-token", refreshAccessToken);
 
 router.post("sign-out", auth, Logout);
 router.get("/get-profile", auth, getProfile);
-router.post("/update-details", auth, updateAccountDetails);
 router.post("/update-profile-image", updateProfileImage);
-router.get("/watch-history", auth, getWatchHistory);
-router.post("/set-username", auth, setUsername);
 
 export default router;

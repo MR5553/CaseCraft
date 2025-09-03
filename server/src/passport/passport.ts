@@ -21,7 +21,6 @@ passport.use(new GitHubStrategy(
             const isUserExists = await Users.findOne({
                 $or: [
                     { "profileInfo.email": email },
-                    { "profileInfo.username": profile.username },
                     { "githubId": profile.id }
                 ]
             });
@@ -38,13 +37,10 @@ passport.use(new GitHubStrategy(
             }
 
             const user = await Users.create({
-                profileInfo: {
-                    name: profile.displayName || profile.username,
-                    email: email,
-                    username: profile.username,
-                    profileImage: {
-                        imageUrl: image
-                    }
+                name: profile.displayName || profile.username,
+                email: email,
+                profileImage: {
+                    imageUrl: image
                 },
                 githubId: profile.id,
                 providers: profile.provider,
@@ -73,7 +69,6 @@ passport.use(new GoogleStrategy(
             const isUserExists = await Users.findOne({
                 $or: [
                     { "profileInfo.email": email },
-                    { "profileInfo.username": profile.username },
                     { "googleId": profile.id }
                 ]
             });
@@ -90,13 +85,11 @@ passport.use(new GoogleStrategy(
             }
 
             const user = await Users.create({
-                profileInfo: {
-                    name: profile.displayName || profile.username,
-                    email: email,
-                    username: profile.username,
-                    profileImage: {
-                        imageUrl: image
-                    }
+                name: profile.displayName || profile.username,
+                email: email,
+                username: profile.username,
+                profileImage: {
+                    imageUrl: image
                 },
                 providers: profile.provider,
                 googleId: profile.id,

@@ -5,7 +5,7 @@ import crypto from "node:crypto";
 import { EmailVerification, ResetPassword } from "../mail/template.mail";
 import { asyncHandler } from "../utils/asyncHandler";
 import { apiError } from "../utils/apiError";
-import mongoose, { isValidObjectId } from "mongoose";
+import { isValidObjectId } from "mongoose";
 import jwt from "jsonwebtoken";
 import { jwtToken } from "../types/jwt.types";
 import { deleteFromCloudinary, UploadOnCloudinary } from "../utils/Cloudinary";
@@ -77,15 +77,13 @@ const signup = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const signin = asyncHandler(async (req: Request, res: Response) => {
-    const { email, username, password }: userType["profileInfo"] = req.body;
+    const { email, password }: userType["profileInfo"] = req.body;
 
-    if ((!email && !username) || !password) {
-        return res.status(404).json({ message: "Email or username and password is required." });
+    if (!email || !password) {
+        return res.status(404).json({ message: "Email and password is required." });
     }
 
-    const isUserExists = await Users.findOne({
-        $or: [{ "profileInfo.email": email, "profileInfo.username": username }]
-    }).select("-refreshToken -verificationCode -verificationCodeExpiry");
+    const isUserExists = await Users.findOne({ "profileInfo.email": email }).select("-refreshToken -verificationCode -verificationCodeExpiry");
 
     if (!isUserExists) throw new apiError(404, "user does not exist, signup intead.");
 
@@ -216,34 +214,6 @@ const getProfile = asyncHandler(async (req: Request, res: Response) => {
     });
 });
 
-const updateAccountDetails = asyncHandler(async (req: Request, res: Response) => {
-    const { profileInfo: { name, username, description }, socialLinks: { LinkedIn, facebook, instagram, twitter, website } }: userType = req.body;
-
-    const user = await Users.findByIdAndUpdate(req.authUser.id,
-        {
-            $set: {
-                profileInfo: {
-                    name,
-                    username,
-                    description
-                },
-                socialLinks: {
-                    LinkedIn,
-                    facebook,
-                    instagram,
-                    twitter,
-                    website
-                }
-            }
-        }, { new: true }
-    ).select("-profileInfo.password -refreshToken -verificationCode -verificationCodeExpiry");
-
-    return res.status(200).json({
-        user: user,
-        success: true,
-        message: "account details updated!.."
-    });
-});
 
 const updateProfileImage = asyncHandler(async (req: Request, res: Response) => {
     const profileImageLocal = req.file?.path;
@@ -278,13 +248,11 @@ const updateProfileImage = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const forgetPassword = asyncHandler(async (req: Request, res: Response) => {
-    const { email, username }: userType["profileInfo"] = req.body;
+    const { email }: userType["profileInfo"] = req.body;
 
-    if (!email && !username) return res.status(400).json({ message: "email or username is required!.." });
+    if (!email) return res.status(400).json({ message: "email is required!.." });
 
-    const user = await Users.findOne({
-        $or: [{ "profileInfo.email": email, "profileInfo.username": username }]
-    }) as userType;
+    const user = await Users.findOne({ "profileInfo.email": email }) as userType;
 
     if (!user) throw new apiError(404, "user does not exists!..");
 
@@ -356,97 +324,15 @@ const resetPassword = asyncHandler(async (req: Request, res: Response) => {
     });
 });
 
-const getWatchHistory = asyncHandler(async (req: Request, res: Response) => {
-    const user = Users.aggregate([
-        {
-            $match: {
-                _id: new mongoose.Types.ObjectId(req.authUser.id)
-            }
-        },
-        {
-            $lookup: {
-                from: "videos",
-                localField: "watchHistory",
-                foreignField: "_id",
-                as: "watchHistory",
-                pipeline: [
-                    {
-                        $lookup: {
-                            from: "users",
-                            localField: "owner",
-                            foreignField: "_id",
-                            as: "owner",
-                            pipeline: [
-                                {
-                                    $project: {
-                                        fullname: 1,
-                                        username: 1,
-                                        profileImage: 1
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        $addFields: {
-                            owner: {
-                                $first: "owner"
-                            }
-                        }
-                    }
-                ]
-            }
-        }
-    ]);
-
-    return res.status(200).json({
-        success: true,
-        message: "user watch history fetched.",
-        watchHistory: user
-    })
-});
-
-const setUsername = asyncHandler(async (req: Request, res: Response) => {
-    const username: string = req.body.username;
-
-    if (!username) return res.status(400).json({ message: "username is missing!.." });
-
-    const existingUser = await Users.findOne({ "profileInfo.username": username }) as userType;
-
-    if (existingUser && existingUser.id !== req.authUser.id) {
-        throw new apiError(400, "username is already taken")
-    }
-
-    const user = await Users.findByIdAndUpdate(req.authUser.id,
-        {
-            $set: {
-                profileInfo: {
-                    username: username
-                }
-            }
-        }
-    ).select("-profileInfo.password -refreshToken -verificationCode -verificationCodeExpiry");
-
-    return res.status(200).json({
-        success: true,
-        message: "username set successfully!..",
-        user: user
-    });
-
-});
-
 export {
     forgetPassword,
     getProfile,
-    getWatchHistory,
     Logout,
     refreshAccessToken,
     ResendEmailVerificationCode,
     resetPassword,
     signin,
     signup,
-    setUsername,
-    updateAccountDetails,
     updateProfileImage,
     VerifyEmail,
     VerifyOtp
