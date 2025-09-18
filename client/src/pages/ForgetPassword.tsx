@@ -60,7 +60,7 @@ export default function ForgetPassword() {
                         type="submit"
                         disabled={!isValid || !isDirty || isSubmitting}
                         endIcon={isSubmitting && <i className="ri-loader-2-line animate-spin" />}
-                        variant="default"
+                        variant="black"
                         size="default"
                     >
                         Continue

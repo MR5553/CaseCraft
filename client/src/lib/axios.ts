@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosRequestConfig } from "axios";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 
@@ -13,17 +13,15 @@ export const api = axios.create({
 api.interceptors.response.use((res) => res,
     async (error: AxiosError) => {
         const status = error.response?.status;
-        const originalRequest = error.config;
+        const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
         if (status === 401 && originalRequest && !originalRequest._retry) {
             originalRequest._retry = true;
 
             try {
-                await axios.get(`${import.meta.env.VITE_SERVER_URL}/api/auth/refresh-token`, {
-                    withCredentials: true
-                });
-
+                await api.get("/api/auth/refresh-token", { withCredentials: true });
                 return api(originalRequest);
+
             } catch (refreshError) {
                 window.location.href = "/sign-in";
                 return Promise.reject(refreshError);

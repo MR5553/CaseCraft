@@ -21,7 +21,7 @@ export default function Signup() {
     const submit = async ({ name, email, password }: { name: string, email: string, password: string }) => {
         await Signup(name, email, password);
 
-        if (user) navigate(`/verifyemail/${user.id}`);
+        if (user) navigate(`/verifyemail/${user._id}`);
     }
 
     return (

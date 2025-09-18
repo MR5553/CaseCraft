@@ -22,7 +22,7 @@ export default function Signin() {
     const submit = async ({ email, password }: { email: string, password: string }) => {
         await SignIn(email, password);
 
-        if (user && !user.isVerified) navigate(`verifyemail/${user.id}`);
+        if (user && !user.isVerified) navigate(`verifyemail/${user._id}`);
         navigate("/")
 
         navigate(location.state?.from?.pathname, { replace: true });

@@ -28,7 +28,7 @@ export default function VerifyOtp() {
 
                     <Button
                         type="submit"
-                        variant="default"
+                        variant="black"
                         size="default"
                         disabled={String(otp).length !== 6}
                     >
