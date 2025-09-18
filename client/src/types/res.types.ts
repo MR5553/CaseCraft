@@ -1,9 +1,13 @@
-import type { userType } from "./user.types";
-
-export interface apiResponse {
+export interface res<T> {
     success: boolean;
     message: string;
-    user: userType;
+    user: T
+}
+
+export interface response<T> {
+    success: boolean;
+    message: string;
+    model: T
 }
 
 export interface apiError {

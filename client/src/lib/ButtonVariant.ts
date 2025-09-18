@@ -5,7 +5,7 @@ export const ButtonVariants = cva(
     {
         variants: {
             variant: {
-                default: "text-white bg-gradient-to-b from-neutral-700 to-neutral-950 shadow",
+                black: "text-white bg-gradient-to-b from-neutral-700 to-neutral-950 shadow",
                 destructive: "bg-red-600 text-white hover:bg-red-500 shadow-md shadow",
                 outlined: "bg-neutral-100 text-neutral-600 border border-neutral-200",
                 ghost: "bg-transparent hover:bg-neutral-100 hover:shadow",
@@ -15,7 +15,7 @@ export const ButtonVariants = cva(
                 default: "h-10 px-4 py-2 rounded-xl",
                 sm: "h-9 rounded-xl px-3",
                 lg: "h-11 rounded-xl px-8",
-                icon: "w-fit p-2 rounded-xl",
+                icon: "w-fit! p-2 rounded-full!",
             },
             defaultVariant: {
                 variant: "defualt",

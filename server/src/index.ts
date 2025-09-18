@@ -7,7 +7,7 @@ db();
 const { PORT } = process.env || 8000;
 
 app.get("/", (_req: Request, res: Response) => {
-    res.json({ success: true, message: "From backend!" })
+    return res.json({ success: true, message: "From backend!" })
 });
 
 app.listen(PORT, () => {

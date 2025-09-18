@@ -1,14 +1,15 @@
-import { useLayoutEffect, useRef } from "react";
-import { useInView, useAnimationFrame, motion, useMotionValue } from "framer-motion";
+import { useEffect, useRef } from "react";
+import { motion, useInView, useMotionValue, useAnimationFrame } from "framer-motion";
 
-const PHONES = [
-    "/template.png",
-    "/testing.png",
-    "/template.png",
-    "/testing.png",
-    "/testing.png",
-    "/template.png",
-]
+const Images = [
+    "https://res.cloudinary.com/dvcp8dyvt/image/upload/v1758233137/caseCraft/phone-case_2_tq0eke.png",
+    "https://res.cloudinary.com/dvcp8dyvt/image/upload/v1758233138/caseCraft/phone-case_3_m4ko90.png",
+    "https://res.cloudinary.com/dvcp8dyvt/image/upload/v1758233134/caseCraft/phone-case_1_b34wxd.png",
+    "https://res.cloudinary.com/dvcp8dyvt/image/upload/v1758232947/caseCraft/phone-case_e0g8wi.png",
+    "https://res.cloudinary.com/dvcp8dyvt/image/upload/v1758233141/caseCraft/phone-case_5_xaobcy.png",
+    "https://res.cloudinary.com/dvcp8dyvt/image/upload/v1758233140/caseCraft/phone-case_4_pq2jgo.png",
+    "https://res.cloudinary.com/dvcp8dyvt/image/upload/v1758233120/caseCraft/hanuman_qfvdc2.png",
+];
 
 function splitArray<T>(array: Array<T>, split: number) {
     const result: Array<Array<T>> = []
@@ -30,10 +31,18 @@ const ReviewColumn = ({ reviews, className, inView, speed = 50 }: { reviews: str
     const y = useMotionValue(0);
 
 
-    useLayoutEffect(() => {
-        if (columnRef.current) {
-            heightRef.current = columnRef.current.scrollHeight / 2;
-        }
+    useEffect(() => {
+        if (!columnRef.current) return;
+
+        const observer = new ResizeObserver(() => {
+            if (columnRef.current) {
+                heightRef.current = columnRef.current.scrollHeight / 2;
+            }
+        });
+
+        observer.observe(columnRef.current);
+
+        return () => observer.disconnect();
     }, [reviews]);
 
 
@@ -46,31 +55,28 @@ const ReviewColumn = ({ reviews, className, inView, speed = 50 }: { reviews: str
     const items = [...reviews, ...reviews];
 
     return (
-        <div className={className}>
-            <motion.div ref={columnRef} style={{ y, willChange: "transform" }} className="space-y-8 py-4">
-                {items.map((src, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: i * 0.05 }}>
-                        <img
-                            src={src}
-                            alt="phone"
-                            className="w-72 h-auto pointer-events-none select-none"
-                        />
-                    </motion.div>
-                ))}
-            </motion.div>
-        </div>
+        <motion.div className={className} ref={columnRef} style={{ y, willChange: "transform" }}>
+            {items.map((src, i) => (
+                <img
+                    key={i}
+                    src={src}
+                    alt="phone"
+                    className="w-70 h-auto py-4 pointer-events-none select-none"
+                />
+            ))}
+        </motion.div>
     )
 }
 
 export default function ReviewGrid() {
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const inView = useInView(containerRef, { once: true, amount: 0.4 });
-    const [column1, column2, column3] = splitArray(PHONES, 3);
+    const inView = useInView(containerRef, { once: true, amount: 0.2 });
+    const [column1, column2, column3] = splitArray(Images, 3);
 
     return (
         <section ref={containerRef}
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(18rem, 1fr))", gap: "2rem" }}
-            className="relative h-[49rem] max-h-[100vh] overflow-hidden justify-items-center"
+            className="relative h-[49rem] overflow-hidden justify-items-center"
         >
 
             {inView && (
@@ -82,15 +88,15 @@ export default function ReviewGrid() {
                     />
 
                     <ReviewColumn
-                        reviews={[...column2, ...column3]}
-                        speed={80}
+                        reviews={[...column2, ...column1, ...column3]}
+                        speed={90}
                         inView={inView}
                     />
 
                     <ReviewColumn
-                        reviews={column3}
+                        reviews={[...column3, ...column1, ...column2]}
                         className="max-md:hidden"
-                        speed={100}
+                        speed={120}
                         inView={inView}
                     />
                 </>

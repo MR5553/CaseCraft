@@ -8,6 +8,7 @@ import type { TextOptions } from "../types/TextOptions.type";
 import { cn } from "../lib/utils";
 import SelectEmoji from "./Emoji";
 import { Slider } from "./Slider";
+import { ButtonVariants } from "../lib/ButtonVariant";
 
 
 export default function FabricText() {
@@ -70,8 +71,7 @@ export default function FabricText() {
                     onChange={(e) => handleChange("text", e.target.value)}
                 />
 
-                <button
-                    className="text-sm font-medium px-3 py-1 bg-neutral-100 rounded-lg hover:bg-neutral-200"
+                <button className={ButtonVariants({ size: "sm", className: "w-max bg-brand/30 text-brand" })}
                     onClick={AddText}
                 >
                     Add
@@ -143,20 +143,20 @@ export default function FabricText() {
                     <div popover="auto" id="emoji" className="bg-transparent"
                         style={{ "--anchor-name": "--emoji-btn-anchor" } as CSSProperties}
                     >
-                        <SelectEmoji onEmojiSelect={(emoji) => handleChange("text", emoji.emoji)} />
+                        <SelectEmoji onEmojiSelect={(emoji) => handleChange("text", properties.text + emoji.emoji)} />
                     </div>
                 </div>
 
                 <button
                     onClick={() => handleChange("underline", !properties.underline)}
-                    className={cn("bg-neutral-100 border border-[#EEE] cursor-pointer rounded-lg px-2 py-1", { "bg-blue-100 text-blue-600 border-blue-600": properties.underline })}
+                    className={cn("bg-neutral-100 border border-[#EEE] cursor-pointer rounded-lg px-2 py-1", { "bg-brand/20 text-brand border-brand": properties.underline })}
                 >
                     <i className="ri-underline text-xl" />
                 </button>
 
                 <button
                     onClick={() => handleChange("linethrough", !properties.linethrough)}
-                    className={cn("bg-neutral-100 border border-[#EEE] cursor-pointer rounded-lg px-2 py-1", { "bg-blue-100 text-blue-600 border-blue-600": properties.linethrough })}
+                    className={cn("bg-neutral-100 border border-[#EEE] cursor-pointer rounded-lg px-2 py-1", { "bg-brand/20 text-brand border-brand": properties.linethrough })}
                 >
                     <i className="ri-strikethrough text-xl" />
                 </button>
@@ -166,7 +166,7 @@ export default function FabricText() {
                         "fontStyle",
                         properties.fontStyle === "normal" ? "italic" : "normal"
                     )}
-                    className={cn("bg-neutral-100 border border-[#EEE] cursor-pointer rounded-lg px-2 py-1", { "bg-blue-100 text-blue-600 border-blue-600": properties.fontStyle === "italic" })}
+                    className={cn("bg-neutral-100 border border-[#EEE] cursor-pointer rounded-lg px-2 py-1", { "bg-brand/20 text-brand border-brand": properties.fontStyle === "italic" })}
                 >
                     <i className="ri-italic text-xl" />
                 </button>
@@ -191,7 +191,6 @@ export default function FabricText() {
                 </select>
             </div>
 
-
             <div className="relative flex flex-col gap-2">
                 <label htmlFor="Character spacing" className="text-sm text-neutral-500 mb-1">
                     Character Spacing
@@ -206,7 +205,7 @@ export default function FabricText() {
                     onChange={(e) => handleChange("charSpacing", parseInt(e.target.value))}
                     elements={{
                         progress: {
-                            className: "bg-blue-600",
+                            className: "bg-brand",
                             role: "progressbar"
                         },
                         root: {

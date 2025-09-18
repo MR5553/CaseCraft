@@ -1,5 +1,16 @@
 import { Document } from "mongoose";
 
+interface Address {
+    houseNo: string;
+    street: string;
+    locality: string;
+    sector: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+}
+
 export interface userType extends Document {
     name: string;
     email: string;
@@ -9,6 +20,7 @@ export interface userType extends Document {
         publicId: string;
         imageUrl: string;
     };
+    address: Address;
     providers: string[];
     googleId: string;
     githubId: string;

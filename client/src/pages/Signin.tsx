@@ -22,24 +22,25 @@ export default function Signin() {
     const submit = async ({ email, password }: { email: string, password: string }) => {
         await SignIn(email, password);
 
-        if (user && !user.isVerified) navigate(`verifyemail/${user._id}`);
+        if (user && !user.isVerified) navigate(`verifyemail/${user.id}`);
         navigate("/")
 
         navigate(location.state?.from?.pathname, { replace: true });
     };
 
     return (
-        <section className="max-w-3xl m-auto flex flex-col gap-4 items-center justify-center h-dvh">
-            <div className="w-[22rem] flex gap-6 flex-col">
+        <section className="flex flex-col gap-4 items-center justify-center h-dvh">
+            <div className="flex gap-6 flex-col">
                 <div>
-                    <h1 className="text-3xl font-semibold text-neutral-800 tracking-wider">
-                        Welcome Back!
+                    <h1 className="text-3xl font-bold text-neutral-800 tracking-wider">
+                        Sign into Case<span className="text-brand">Craft</span>
                     </h1>
 
-                    <p className="text-neutral-700 font-normal mt-1">
-                        Sign in to streaming your favorite videos.
+                    <p className="max-w-sm text-gray-500 font-normal mt-1">
+                        Sign in to continue crafting, and showcasing your cases with ease.
                     </p>
                 </div>
+
 
                 <form onSubmit={handleSubmit(submit)} className="w-full grid gap-5">
                     <div>
@@ -74,7 +75,7 @@ export default function Signin() {
 
                     <Button
                         type="submit"
-                        variant="default"
+                        variant="black"
                         size="default"
                         disabled={!isValid || !isDirty || isSubmitting}
                         endIcon={isSubmitting && <i className="ri-loader-2-line animate-spin" />}
@@ -84,9 +85,7 @@ export default function Signin() {
 
                 </form>
 
-                <div>
-                    <SocialSignin />
-                </div>
+                <SocialSignin />
 
                 <div>
                     <p className="text-neutral-700 text-base font-normal text-center">

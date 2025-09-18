@@ -25,14 +25,10 @@ export const verifyJwtToken = async (req: Request, res: Response, next: NextFunc
         req.auth = user;
 
         return next();
-
     } catch (error) {
-        res.status(401).json({
+        return res.status(500).json({
             success: false,
-            message:
-                error.name === "TokenExpiredError"
-                    ? "Session expired, please sign in again."
-                    : "Invalid token, authentication failed.",
+            message: error?.description || error?.message || "Unathorized access.",
         });
     }
 };

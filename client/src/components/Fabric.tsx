@@ -6,9 +6,7 @@ import { useCanvas } from "../store/useCanvas";
 
 export default function Fabric() {
     const ref = useRef<HTMLCanvasElement>(null);
-    const containerRef = useRef<Canvas | null>(null);
-    const { canvas, setCanvas, setTemplateImage, model } = useCanvas();
-
+    const { canvas, setCanvas, setModelImage, model } = useCanvas();
 
 
     useEffect(() => {
@@ -37,17 +35,16 @@ export default function Fabric() {
                 uniScaleKey: "shiftKey",
                 allowTouchScrolling: true,
                 enableRetinaScaling: true,
+                controlsAboveOverlay: true,
                 imageSmoothingEnabled: true,
                 preserveObjectStacking: true,
             });
-            canvas.setDimensions({ width: "auto", height: "40rem" }, { cssOnly: true });
+            canvas.setDimensions({ width: "auto", height: "38rem" }, { cssOnly: true });
 
 
-            const Image = await FabricImage.fromURL(model.url);
+            const Image = await FabricImage.fromURL(model.image.URL, { crossOrigin: "anonymous" });
 
-            const scale = Math.min(canvas.height * 0.9 / Image.height);
-
-            Image.scale(scale);
+            Image.scaleToHeight(canvas.height * 0.9);
             Image.set({
                 selectable: false,
                 evented: false,
@@ -59,15 +56,15 @@ export default function Fabric() {
                     offsetX: 15,
                     offsetY: 15
                 },
-                name: "template",
-            });
-
+                name: "model",
+                objectCaching: false,
+                preserveAspectRatio: "meet"
+            })
             canvas.centerObject(Image);
             canvas.sendObjectToBack(Image);
             canvas.add(Image);
 
-            setTemplateImage(Image.name || "template");
-            containerRef.current = canvas;
+            setModelImage(Image.name || "model");
             setCanvas(canvas);
             canvas.requestRenderAll();
         };
@@ -76,7 +73,7 @@ export default function Fabric() {
 
         return () => { if (canvas) canvas.dispose() };
 
-    }, [model, setCanvas, setTemplateImage]);
+    }, [model, setCanvas, setModelImage]);
 
 
     useEffect(() => {

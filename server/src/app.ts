@@ -24,11 +24,14 @@ app.use(passport.initialize());
 
 import userRoute from "./routes/user.route";
 import authRoute from "./routes/passport.route";
-import caseRoute from "./routes/case.route";
+import modelRoute from "./routes/model.route";
+import orderRoute from "./routes/Order.route";
+
 
 app.use("/api/auth", userRoute);
-app.use("/auth", authRoute);
-app.use("/api", caseRoute)
+app.use("api/passport", authRoute);
+app.use("/api/model", modelRoute)
+app.use("/api/payment", orderRoute)
 
 
 app.use(globalErrorHandler);

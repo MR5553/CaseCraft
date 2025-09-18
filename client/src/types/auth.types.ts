@@ -1,4 +1,4 @@
-import type { userType } from "./user.types";
+import type { userType } from "./types";
 
 export interface userState {
     user: userType;

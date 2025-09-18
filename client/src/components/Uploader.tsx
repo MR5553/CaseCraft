@@ -54,7 +54,7 @@ export default function Uplaoder({ onUploadFile, accept, size, className, ...pro
     };
 
     return (
-        <div className={cn("w-full h-[35rem] bg-neutral-100 border-2 border-dashed border-neutral-400 rounded-xl cursor-pointer", drag && "bg-blue-100 border-blue-600", className)}
+        <div className={cn("w-full py-10 hover:bg-neutral-100 border-2 border-dashed border-neutral-200 rounded-xl cursor-pointer", drag && "bg-brand/20 border-brand", className)}
             role="button"
             aria-label="File upload area"
             tabIndex={0}
@@ -78,10 +78,10 @@ export default function Uplaoder({ onUploadFile, accept, size, className, ...pro
                 {...props}
             />
             <div className="w-full h-full flex flex-col gap-1 items-center justify-center">
-                <Image className={cn("w-20 h-20 fill-neutral-300 stroke-neutral-900", { "fill-blue-200 stroke-blue-600": drag })}
+                <Image className={cn("w-10 h-10 fill-neutral-300 stroke-neutral-900", { "fill-brand/20 stroke-brand": drag })}
                 />
-                <label htmlFor="upload-file" className={cn("text-zinc-800 font-medium text-base", { "text-blue-600": drag })}>
-                    Drag & drop a file here, or click to select one
+                <label htmlFor="upload-file" className={cn("text-zinc-800 font-medium text-sm", { "text-brand": drag })}>
+                    Drag & drop a file here, or click to select
                 </label>
                 <span className={cn("text-xs text-neutral-400")}>Supports: {supports} [max: {size}MB]</span>
             </div>

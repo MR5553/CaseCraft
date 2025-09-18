@@ -40,6 +40,33 @@ const userSchema = new Schema<userType>({
             default: ""
         }
     },
+    address: {
+        houseNo: {
+            type: String,
+        },
+        street: {
+            type: String,
+        },
+        locality: {
+            type: String,
+        },
+        sector: {
+            type: String,
+        },
+        city: {
+            type: String,
+        },
+        state: {
+            type: String,
+        },
+        postalCode: {
+            type: String,
+        },
+        country: {
+            type: String,
+            default: "India"
+        },
+    },
     providers: {
         type: [String],
         default: []

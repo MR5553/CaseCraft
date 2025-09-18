@@ -21,20 +21,21 @@ export default function Signup() {
     const submit = async ({ name, email, password }: { name: string, email: string, password: string }) => {
         await Signup(name, email, password);
 
-        if (user) navigate(`/verifyemail/${user._id}`);
+        if (user) navigate(`/verifyemail/${user.id}`);
     }
 
     return (
         <section className="flex flex-col gap-4 items-center justify-center h-dvh">
             <div className="flex gap-6 flex-col">
                 <div>
-                    <h1 className="text-3xl font-semibold text-neutral-800 tracking-wider">
-                        Join us today
+                    <h1 className="text-3xl font-bold text-neutral-800 tracking-wider">
+                        Create your account
                     </h1>
-                    <p className="text-neutral-700 font-normal mt-1">
-                        Join our community and start your journey today!
+                    <p className="max-w-sm text-gray-500 font-normal mt-1">
+                        Sign up to continue crafting, and showcasing your cases with ease.
                     </p>
                 </div>
+
 
                 <form onSubmit={handleSubmit(submit)} className="w-full grid gap-5">
                     <div>
@@ -72,7 +73,7 @@ export default function Signup() {
                         type="submit"
                         disabled={!isValid || !isDirty || isSubmitting}
                         endIcon={isSubmitting && <i className="ri-loader-2-line animate-spin" />}
-                        variant="default"
+                        variant="black"
                         size="default"
                     >
                         Sign up

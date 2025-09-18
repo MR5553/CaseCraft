@@ -3,42 +3,29 @@ import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { api } from "../lib/axios";
 import type { action, userState } from "../types/auth.types";
-import type { apiError, apiResponse } from "../types/res.types";
+import type { apiError, res } from "../types/res.types";
 import { toast } from "sonner";
 import type { AxiosError } from "axios";
+import type { userType } from "../types/types";
+
 
 const initialState: userState = {
     user: {
-        profileInfo: {
-            name: "",
-            username: "",
-            email: "",
-            profileImage: {
-                publicId: "",
-                imageUrl: "",
-            },
-            coverImage: {
-                publicId: "",
-                imageUrl: "",
-            },
-            description: "",
+        _id: "",
+        name: "",
+        email: "",
+        Number: "",
+        profileImage: {
+            publicId: "",
+            imageUrl: "",
         },
         providers: [],
         googleId: "",
         githubId: "",
-        socialLinks: {
-            instagram: "",
-            facebook: "",
-            twitter: "",
-            LinkedIn: "",
-            website: "",
-        },
-        _id: "",
-        watchHistory: [],
-        watchLater: [],
         isVerified: false,
         createdAt: "",
         updatedAt: "",
+        refreshToken: ""
     },
     hydrated: false,
     isAuthenticated: false,
@@ -52,7 +39,7 @@ export const useAuth = create<userState & action>()(
 
             SignIn: async (email, password) => {
                 try {
-                    const { data } = await api.post<apiResponse>("api/auth/sign-in", { email, password });
+                    const { data } = await api.post<res<userType>>("api/auth/sign-in", { email, password });
 
                     if (data.success) {
                         set({ user: data.user, isAuthenticated: data.user.isVerified });
@@ -67,7 +54,7 @@ export const useAuth = create<userState & action>()(
 
             Signup: async (name, email, password) => {
                 try {
-                    const { data } = await api.post<apiResponse>("api/auth/sign-up", { name, email, password });
+                    const { data } = await api.post<res<userType>>("api/auth/sign-up", { name, email, password });
 
                     if (data.success) set({ user: data.user });
 
@@ -79,7 +66,7 @@ export const useAuth = create<userState & action>()(
 
             getProfile: async () => {
                 try {
-                    const { data } = await api.get<apiResponse>("api/auth/get-profile");
+                    const { data } = await api.get<res<userType>>("api/auth/get-profile");
 
                     if (data.success) {
                         set({ user: data.user, isAuthenticated: data.user.isVerified });
@@ -93,7 +80,7 @@ export const useAuth = create<userState & action>()(
 
             SignOut: async () => {
                 try {
-                    const { data } = await api.get<apiResponse>("api/auth/sign-out");
+                    const { data } = await api.get<res<userType>>("api/auth/sign-out");
 
                     if (data.success) set({ ...initialState, hydrated: true });
 

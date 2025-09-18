@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import { Canvas } from "fabric";
-import { FINISHES, MATERIALS, MODELS } from "../lib/Constant";
+import { FINISHES, MATERIALS } from "../lib/Constant";
+import { api } from "../lib/axios";
+import type { AxiosError } from "axios";
+import type { apiError } from "../types/res.types";
+import { toast } from "sonner";
+import type { Model } from "../types/types";
 
 
 type Option = {
@@ -8,17 +13,9 @@ type Option = {
     finish: (typeof FINISHES.options)[number];
 }
 
-type Model = {
-    name: string;
-    url: string;
-    path: string;
-    offsetX: number;
-    offsetY: number;
-}
-
 type state = {
     canvas: Canvas | null;
-    templateImage: string;
+    modelImage: string;
     uploadedImage: string;
     option: Option;
     data: string;
@@ -28,18 +25,18 @@ type state = {
 
 interface action {
     setCanvas: (canvas: Canvas) => void;
-    setTemplateImage: (name: string) => void;
+    setModelImage: (name: string) => void;
     setUploadedImage: (url: string) => void;
     setData: (data: string) => void;
     setOption: <K extends keyof Option>(key: K, value: Option[K]) => void;
-    getModels: () => Promise<void>;
-    setModels: (name: string) => void;
+    getAllModels: () => void;
+    setModel: (id: string) => void;
 }
 
 
-export const useCanvas = create<state & action>((set, get) => ({
+export const useCanvas = create<state & action>((set) => ({
     canvas: null,
-    templateImage: "",
+    modelImage: "",
     uploadedImage: "",
     data: "",
     option: {
@@ -47,26 +44,34 @@ export const useCanvas = create<state & action>((set, get) => ({
         finish: FINISHES.options[0],
     },
     models: [],
-    model: MODELS[0],
+    model: null,
 
     setCanvas: (canvas: Canvas) => set({ canvas: canvas }),
-    setTemplateImage: (name: string) => set({ templateImage: name }),
+    setModelImage: (name: string) => set({ modelImage: name }),
     setUploadedImage: (url: string) => set({ uploadedImage: url }),
     setData: (data: string) => set({ data: data }),
     setOption: (key, value) => set((state) => ({
         option: { ...state.option, [key]: value },
     })),
 
-    getModels: async () => {
-        const data = MODELS;
+    getAllModels: async () => {
+        try {
+            const { data } = await api.post(`api/model/getAllModels`);
 
-        set({ models: data });
+            if (data.success) {
+                set({ models: data.models });
+            }
+
+        } catch (error: unknown) {
+            const err = error as AxiosError<apiError>;
+            toast.error(err.response?.data.message)
+        }
     },
 
-    setModels: (name: string) => {
-        const { models } = get();
-        const model = models.find((m) => m.name === name) || null;
-
-        set({ model: model });
-    }
+    setModel: (id: string) => {
+        set((state) => {
+            const model = state.models.find((m) => m._id === id) || null;
+            return { model: model };
+        });
+    },
 }))

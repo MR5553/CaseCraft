@@ -21,6 +21,15 @@
 }
 
 
+@theme {
+  --color-brand: #FFB441;
+  --color-backround: #131316;
+}
+
+body {
+  background-color: light-dark(#FFF, #18181b);
+}
+
 input[type="range"] {
   appearance: none;
   outline: none;
@@ -32,14 +41,14 @@ input[type="range"] {
     width: 1rem;
     border-radius: 50px;
     cursor: grab;
-    background-color: #1d4ed8;
+    background-color: #FFB441;
     border: 2px solid #fff;
     transition: all 0.3s ease;
   }
 
   &:hover {
     &::-webkit-slider-thumb {
-      outline: 5px solid rgba(29, 78, 216, 0.2);
+      outline: 5px solid rgb(255, 180, 65, 0.3);
     }
   }
 
@@ -47,7 +56,7 @@ input[type="range"] {
     outline: none;
 
     &::-webkit-slider-thumb {
-      outline: 5px solid rgba(29, 78, 216, 0.3);
+      outline: 5px solid rgb(255, 180, 65, 0.3);
     }
   }
 }
@@ -59,10 +68,10 @@ select,
 
 select {
   background: #F5F5F5;
-  border: 1px solid #EEE;
-  outline: none;
   font-size: 14px;
+  border: 1px solid #e5e5e5;
   border-radius: 8px;
+  font-weight: 500;
 
   & option {
     padding: 10px;
@@ -73,8 +82,7 @@ select {
 
     &:focus {
       outline: none;
-      background: #DBEAFE;
-      color: #155DFC;
+      background: #F5F5F5;
     }
   }
 
@@ -85,14 +93,14 @@ select {
     box-shadow: rgba(100, 100, 111, 0.2) 0px 5px 30px 0px;
 
     &:hover {
-      background-color: #EEE;
+      background-color: #F5F5F5;
     }
   }
 
 
   &:focus,
   &:hover {
-    background: #E5E5E5;
+    background: #F5F5F5;
   }
 
   &::picker-icon {
@@ -105,9 +113,9 @@ select {
 
 
 section {
-  max-width: 72rem;
+  max-width: 75rem;
   margin-inline: auto;
-  padding-inline: clamp(2rem, calc(1rem + 2vw), 4rem);
+  padding-inline: clamp(1rem, 0.4rem + 3vw, 4rem);
 }
 
 .title {
@@ -121,7 +129,6 @@ button {
 
 div[popover] {
   inset: auto;
-  position: absolute;
   position-anchor: var(--anchor-name);
   left: anchor(var(--anchor-name) center);
   top: anchor(var(--anchor-name) bottom);

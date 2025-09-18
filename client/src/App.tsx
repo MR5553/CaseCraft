@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useCallback, useEffect } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Loader from "./components/Loader";
 import { Toaster } from "sonner";
@@ -13,9 +13,9 @@ const Home = lazy(() => import("./pages/Home.tsx"));
 const VerifyOtp = lazy(() => import("./pages/VerifyOtp.tsx"));
 const ForgetPassword = lazy(() => import("./pages/ForgetPassword.tsx"));
 const Configuration = lazy(() => import("./pages/Configuration.tsx"));
-const UploadImage = lazy(() => import("./pages/UploadImage.tsx"));
 const Design = lazy(() => import("./pages/Design.tsx"));
-const Preview = lazy(() => import("./components/Preview.tsx"));
+const Preview = lazy(() => import("./pages/Preview.tsx"));
+const Checkout = lazy(() => import("./pages/Checkout.tsx"));
 
 
 const router = createBrowserRouter([
@@ -27,9 +27,9 @@ const router = createBrowserRouter([
         path: "/configure",
         element: <Configuration />,
         children: [
-          { path: "upload", element: <UploadImage /> },
           { path: "design", element: <Design /> },
           { path: "preview", element: <Preview /> },
+          { path: "check-out", element: <Checkout /> },
         ]
       },
     ],
@@ -51,7 +51,9 @@ const router = createBrowserRouter([
 export default function App() {
   const { getProfile, hydrated } = useAuth();
 
-  useEffect(() => { getProfile(); }, [getProfile, hydrated]);
+  const profile = useCallback(() => { getProfile() }, [getProfile])
+  useEffect(() => { profile(); }, [profile, hydrated]);
+
 
   return (
     <Suspense fallback={<Loader />}>

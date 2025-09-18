@@ -43,8 +43,7 @@ const signup = async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: "Name, Email & Password are required." });
         }
 
-        const existingUser = await Users.findOne({ email: email });
-
+        const existingUser = await Users.findOne({ email });
         if (existingUser) {
             return res.status(409).json({ success: false, message: "User already exists, please signin instead." });
         }
@@ -60,14 +59,12 @@ const signup = async (req: Request, res: Response) => {
         });
 
         if (!user) {
-            return res.status(500).json({ success: false, message: "Unable to create user." });
+            return res.status(500).json({ success: false, message: "Erro while creating user." });
         }
 
-        //await EmailVerification(user);
+        // await EmailVerification(user);
 
-        const new_user = await Users.findById(user.id).select(
-            "-password -refreshToken -verificationCode -verificationCodeExpiry"
-        );
+        const new_user = await Users.findById(user.id).select("-password -refreshToken -verificationCode -verificationCodeExpiry");
 
         return res.status(201).json({
             user: new_user,
@@ -76,7 +73,10 @@ const signup = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        return res.status(500).json({ sucess: false, error: (error as Error).message });
+        return res.status(500).json({
+            success: false,
+            message: error?.description || error?.message || "Internal Server Error",
+        });
     }
 };
 
@@ -92,7 +92,7 @@ const signin = async (req: Request, res: Response) => {
         const existingUser = await Users.findOne({ email: email }).select("-refreshToken -verificationCode -verificationCodeExpiry") as userType;
 
         if (!existingUser) {
-            res.status(404).json({ success: false, message: "User does not exist, please sign up instead.return " });
+            return res.status(404).json({ success: false, message: "User does not exist, please sign up instead" });
         }
 
         if (!existingUser.isVerified) {
@@ -123,7 +123,10 @@ const signin = async (req: Request, res: Response) => {
             });
 
     } catch (error) {
-        return res.status(500).json({ sucess: false, error: (error as Error).message });
+        return res.status(500).json({
+            success: false,
+            message: error?.description || error?.message || "Internal Server Error",
+        });
     }
 };
 
@@ -176,7 +179,11 @@ const VerifyEmail = async (req: Request, res: Response) => {
             });
 
     } catch (error) {
-        return res.status(500).json({ sucess: false, error: (error as Error).message });
+        return res.status(500).json({
+            success: false,
+            message:
+                error?.description || error?.message || "Internal Server Error",
+        });
     }
 };
 
@@ -212,7 +219,10 @@ const resendVerificationCode = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        return res.status(500).json({ sucess: false, error: (error as Error).message });
+        return res.status(500).json({
+            success: false,
+            message: error?.description || error?.message || "Internal Server Error",
+        });
     }
 };
 
@@ -236,7 +246,10 @@ const Logout = async (req: Request, res: Response) => {
             });
 
     } catch (error) {
-        return res.status(500).json({ sucess: false, error: (error as Error).message });
+        return res.status(500).json({
+            success: false,
+            message: error?.description || error?.message || "Internal Server Error",
+        });
     }
 };
 
@@ -275,7 +288,10 @@ const refreshAccessToken = async (req: Request, res: Response) => {
             });
 
     } catch (error) {
-        return res.status(500).json({ sucess: false, error: (error as Error).message });
+        return res.status(500).json({
+            success: false,
+            message: error?.description || error?.message || "Internal Server Error",
+        });
     }
 };
 
@@ -287,9 +303,11 @@ const getProfile = async (req: Request, res: Response) => {
             success: true,
             message: "current user fetched successfully."
         });
-
     } catch (error) {
-        return res.status(500).json({ sucess: false, error: (error as Error).message });
+        return res.status(500).json({
+            success: false,
+            message: error?.description || error?.message || "Internal Server Error",
+        });
     }
 };
 
@@ -334,7 +352,10 @@ const updateProfileImage = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        return res.status(500).json({ sucess: false, error: (error as Error).message });
+        return res.status(500).json({
+            success: false,
+            message: error?.description || error?.message || "Internal Server Error",
+        });
     }
 };
 
@@ -368,8 +389,12 @@ const forgetPassword = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        return res.status(500).json({ sucess: false, error: (error as Error).message });
+        return res.status(500).json({
+            success: false,
+            message: error?.description || error?.message || "Internal Server Error",
+        });
     }
+
 };
 
 
@@ -410,7 +435,10 @@ const verifyOtp = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        return res.status(500).json({ sucess: false, error: (error as Error).message });
+        return res.status(500).json({
+            success: false,
+            message: error?.description || error?.message || "Internal Server Error",
+        });
     }
 };
 
@@ -444,7 +472,10 @@ const resetPassword = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        return res.status(500).json({ success: false, error: (error as Error).message });
+        return res.status(500).json({
+            success: false,
+            message: error?.description || error?.message || "Internal Server Error",
+        });
     }
 };
 

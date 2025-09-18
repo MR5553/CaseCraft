@@ -22,7 +22,7 @@ router.get("/github/callback", passport.authenticate("github", { session: false,
                 .redirect(`${process.env.CLIENT_ORIGIN!}/`)
 
         } catch (error) {
-            console.error("GitHub login error:", error.message);
+            console.error("GitHub login error:", error);
             res.redirect(
                 `${process.env.CLIENT_ORIGIN}/sign-in?error=oauth_failed`
             );
@@ -46,7 +46,7 @@ router.get("/google/callback", passport.authenticate("google", { session: false,
                 .redirect(`${process.env.CLIENT_ORIGIN!}/`)
 
         } catch (error) {
-            console.error("GitHub login error:", error.message);
+            console.error("GitHub login error:", error);
             res.redirect(
                 `${process.env.CLIENT_ORIGIN}/sign-in?error=oauth_failed`
             );

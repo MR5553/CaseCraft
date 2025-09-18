@@ -3,9 +3,9 @@ import { cn } from "../lib/utils";
 
 
 const STEPS = [
-    { name: "Step 1: Add image", description: "Choose an image for your case", url: "/upload" },
-    { name: "Step 2: Customize design", description: "Make the case yours", url: "/design" },
-    { name: "Step 3: Summary", description: "Review your final design", url: "/preview" },
+    { name: "Step 1: Customize design", description: "Make the case yours", url: "/design" },
+    { name: "Step 2: Summary", description: "Review your final design", url: "/preview" },
+    { name: "Step 3: Check out", description: "Choose an image for your case", url: "/check-out" },
 ];
 
 export default function Steps() {
@@ -23,9 +23,9 @@ export default function Steps() {
                             key={step.name}
                             className={cn("relative h-20 overflow-hidden flex flex-1 items-center px-5 py-2")}
                         >
-                            <Link to={`/configure${step.url}`} className="w-full">
+                            <Link to={`/configure${step.url}`} className="w-full" title={step.name}>
                                 <span
-                                    className={cn("absolute left-0 top-0 h-full w-1 bg-neutral-300 md:bottom-0 md:top-auto md:h-1 md:w-full", { "bg-neutral-500": isCurrent, "bg-green-600": isCompleted })}
+                                    className={cn("absolute left-0 top-0 h-full w-1 bg-neutral-300 md:bottom-0 md:top-auto md:h-1 md:w-full", { "bg-neutral-500": isCurrent, "bg-green-700": isCompleted })}
                                     aria-hidden="true"
                                 />
 
