@@ -3,7 +3,8 @@ import cors from "cors";
 import morgan from "morgan";
 import CookieParser from "cookie-parser";
 import passport from "passport";
-import "./passport/passport"
+import "./passport/passport";
+import rateLimit from "express-rate-limit";
 import { globalErrorHandler } from "./utils/globalErrorHandler";
 
 const app = express();
@@ -13,6 +14,18 @@ app.use(morgan("tiny"));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(express.static("public"));
 app.use(CookieParser());
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 1000,
+    message: {
+        message: "Too many requests from this IP, please try again later",
+        error: "RATE_LIMIT_EXCEEDED"
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+app.use(globalLimiter);
 app.use(cors({
     origin: process.env.CLIENT_ORIGIN,
     credentials: true,
