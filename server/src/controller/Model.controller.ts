@@ -51,10 +51,7 @@ const AddModel = async (req: Request, res: Response) => {
         })
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
 
@@ -73,10 +70,7 @@ const getAllModels = async (_req: Request, res: Response) => {
             message: "All models fetched successfully",
         });
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
 
@@ -129,10 +123,7 @@ const updateModel = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
 
@@ -163,10 +154,7 @@ const deleteModel = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 }
 

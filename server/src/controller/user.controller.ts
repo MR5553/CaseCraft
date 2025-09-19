@@ -73,10 +73,7 @@ const signup = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
 
@@ -123,10 +120,7 @@ const signin = async (req: Request, res: Response) => {
             });
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
 
@@ -179,11 +173,7 @@ const VerifyEmail = async (req: Request, res: Response) => {
             });
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message:
-                error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
 
@@ -219,10 +209,7 @@ const resendVerificationCode = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
 
@@ -246,10 +233,7 @@ const Logout = async (req: Request, res: Response) => {
             });
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
 
@@ -288,10 +272,7 @@ const refreshAccessToken = async (req: Request, res: Response) => {
             });
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
 
@@ -304,10 +285,7 @@ const getProfile = async (req: Request, res: Response) => {
             message: "current user fetched successfully."
         });
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
 
@@ -352,10 +330,7 @@ const updateProfileImage = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
 
@@ -389,10 +364,7 @@ const forgetPassword = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 
 };
@@ -435,10 +407,7 @@ const verifyOtp = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
 
@@ -472,10 +441,7 @@ const resetPassword = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
 

@@ -25,11 +25,7 @@ export const createOrder = async (req: Request, res: Response) => {
         res.status(200).json({ success: true, order });
 
     } catch (error) {
-        console.error("❌ Razorpay Error:", error);
-        res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
 
@@ -49,9 +45,6 @@ export const verifyPayment = async (req: Request, res: Response) => {
         }
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error?.description || error?.message || "Internal Server Error",
-        });
+        throw new error;
     }
 };
