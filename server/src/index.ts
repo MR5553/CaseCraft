@@ -8,6 +8,7 @@ import CookieParser from "cookie-parser";
 import passport from "passport";
 import "./passport/passport";
 import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import { globalErrorHandler } from "./utils/globalErrorHandler";
 db();
 
@@ -46,7 +47,6 @@ import userRoute from "./routes/user.route";
 import authRoute from "./routes/passport.route";
 import modelRoute from "./routes/model.route";
 import orderRoute from "./routes/order.route";
-import helmet from "helmet";
 
 
 app.use("/api/auth", userRoute);
