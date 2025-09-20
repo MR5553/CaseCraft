@@ -1,5 +1,4 @@
 import "dotenv/config";
-import { Request, Response } from "express";
 import db from "./db/dbConfig";
 import express from "express";
 import cors from "cors";
@@ -54,13 +53,8 @@ app.use("/api/passport", authRoute);
 app.use("/api/model", modelRoute)
 app.use("/api/payment", orderRoute)
 
-app.get("/", (_req: Request, res: Response) => {
-    return res.json({ success: true, message: "From backend!" })
-});
-
 
 app.use(globalErrorHandler);
-
 
 app.listen(PORT, () => {
     console.log(`server is running at http://localhost:${PORT}`);
