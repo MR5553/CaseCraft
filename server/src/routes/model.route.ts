@@ -4,17 +4,17 @@ import {
     getAllModels,
     updateModel,
     deleteModel
-} from "../controller/Model.controller";
+} from "../controller/model.controller"
 import { uploadFile } from "../middleware/multer.middleware";
 
 
 const router = Router();
 
 
-router.post("/add", uploadFile.single("image"), AddModel);
-router.post("/getAllModels", uploadFile.single("image"), getAllModels);
-router.post("/updateModel/:id", uploadFile.single("image"), updateModel);
-router.post("/deleteModel/:id", uploadFile.single("image"), deleteModel);
+router.post("/models", uploadFile.single("image"), AddModel);
+router.get("/models", getAllModels);
+router.put("/models/:id", uploadFile.single("image"), updateModel);
+router.delete("/models/:id", deleteModel);
 
 
 export default router;

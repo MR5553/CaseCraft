@@ -17,17 +17,20 @@ import {
 
 const router = Router();
 
-router.post("/sign-up", signup);
-router.post("/sign-in", signin);
-router.post("/verify-email/:id", VerifyEmail);
-router.post("/resend-verification-code/:id", resendVerificationCode);
-router.post("/forget-password", forgetPassword);
-router.post("/verify-otp/:id", verifyOtp);
-router.post("/reset-password/:id", resetPassword);
+
+router.post("/signup", signup);
+router.post("/signin", signin);
+router.post("/signout", verifyJwtToken, Logout);
 router.post("/refresh-token", refreshAccessToken);
 
-router.post("sign-out", verifyJwtToken, Logout);
-router.get("/get-profile", verifyJwtToken, getProfile);
-router.post("/update-profile-image", updateProfileImage);
+router.post("/verify-email/:token", VerifyEmail);
+router.post("/resend-verification-code/:userId", resendVerificationCode);
+
+router.post("/forgot-password", forgetPassword);
+router.post("/verify-otp/:userId", verifyOtp);
+router.post("/reset-password/:token", resetPassword);
+
+router.get("/me", verifyJwtToken, getProfile);
+router.patch("/me/image", verifyJwtToken, updateProfileImage);
 
 export default router;
