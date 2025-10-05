@@ -69,7 +69,6 @@ select,
 select {
   background: #F5F5F5;
   font-size: 14px;
-  border: 1px solid #e5e5e5;
   border-radius: 8px;
   font-weight: 500;
 
@@ -91,6 +90,7 @@ select {
     margin-top: 5px;
     scrollbar-width: thin;
     box-shadow: rgba(100, 100, 111, 0.2) 0px 5px 30px 0px;
+    z-index: 999;
 
     &:hover {
       background-color: #F5F5F5;
@@ -123,7 +123,7 @@ section {
 }
 
 
-button {
+button[popoverTarget] {
   anchor-name: var(--anchor-name);
 }
 

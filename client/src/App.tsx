@@ -10,12 +10,13 @@ const Signup = lazy(() => import("./pages/Signup.tsx"));
 const Signin = lazy(() => import("./pages/Signin.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const Home = lazy(() => import("./pages/Home.tsx"));
-const VerifyOtp = lazy(() => import("./pages/VerifyOtp.tsx"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail.tsx"));
 const ForgetPassword = lazy(() => import("./pages/ForgetPassword.tsx"));
 const Configuration = lazy(() => import("./pages/Configuration.tsx"));
 const Design = lazy(() => import("./pages/Design.tsx"));
 const Preview = lazy(() => import("./pages/Preview.tsx"));
 const Checkout = lazy(() => import("./pages/Checkout.tsx"));
+const Profile = lazy(() => import("./pages/Profile.tsx"));
 
 
 const router = createBrowserRouter([
@@ -35,12 +36,15 @@ const router = createBrowserRouter([
     ],
   },
   {
+    path: "/profile", element: <Profile />,
+  },
+  {
     path: "/",
     element: <PUBLIC />,
     children: [
       { path: "sign-up", element: <Signup /> },
       { path: "sign-in", element: <Signin /> },
-      { path: "verify-otp/:id", element: <VerifyOtp /> },
+      { path: "verifyemail/:id", element: <VerifyEmail /> },
       { path: "forget-password", element: <ForgetPassword /> },
     ]
   },
@@ -51,7 +55,8 @@ const router = createBrowserRouter([
 export default function App() {
   const { getProfile, hydrated } = useAuth();
 
-  const profile = useCallback(() => { getProfile() }, [getProfile])
+
+  const profile = useCallback(() => { getProfile() }, [getProfile]);
   useEffect(() => { profile(); }, [profile, hydrated]);
 
 

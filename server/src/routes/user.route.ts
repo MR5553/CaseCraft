@@ -9,6 +9,7 @@ import {
     resetPassword,
     signin,
     signup,
+    updateAddress,
     updateProfileImage,
     VerifyEmail,
     verifyOtp
@@ -31,6 +32,7 @@ router.post("/verify-otp/:userId", verifyOtp);
 router.post("/reset-password/:token", resetPassword);
 
 router.get("/me", verifyJwtToken, getProfile);
-router.patch("/me/image", verifyJwtToken, updateProfileImage);
+router.put("/me/image", verifyJwtToken, updateProfileImage);
+router.put("/me/update", verifyJwtToken, updateAddress);
 
 export default router;

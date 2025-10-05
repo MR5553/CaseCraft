@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Button } from "../components/Button"
-import { Input } from "../components/Input"
+import Button from "../components/Button"
+import Input from "../components/Input"
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -22,7 +22,7 @@ export default function Signin() {
     const submit = async ({ email, password }: { email: string, password: string }) => {
         await SignIn(email, password);
 
-        if (user && !user.isVerified) navigate(`verifyemail/${user._id}`);
+        if (user && !user.verified) navigate(`verifyemail/${user._id}`);
         navigate("/")
 
         navigate(location.state?.from?.pathname, { replace: true });

@@ -15,3 +15,8 @@ export const formatPrice = (price: number) => {
 
   return formatter.format(price);
 };
+
+
+export const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString("en-GB")
+}

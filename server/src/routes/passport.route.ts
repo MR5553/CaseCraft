@@ -1,7 +1,7 @@
 import { Response, Request, Router } from "express";
 import passport from "passport";
 import { userType } from "../types/user.types";
-import { generateToken, option } from "../controller/user.controller";
+import { generateToken, refreshTokenOption, accessTokenOption } from "../controller/user.controller";
 
 
 const router = Router();
@@ -17,9 +17,9 @@ router.get("/github/callback", passport.authenticate("github", { session: false,
 
             return res
                 .status(200)
-                .cookie("accessToken", accessToken, option)
-                .cookie("refreshToken", refreshToken, option)
-                .redirect(`${process.env.CLIENT_ORIGIN!}/`)
+                .cookie("accessToken", accessToken, accessTokenOption)
+                .cookie("refreshToken", refreshToken, refreshTokenOption)
+                .redirect(`${process.env.CLIENT_ORIGIN}${URL}`)
 
         } catch (error) {
             console.error("GitHub login error:", error);
@@ -39,11 +39,13 @@ router.get("/google/callback", passport.authenticate("google", { session: false,
 
             const { accessToken, refreshToken } = await generateToken(user.id);
 
+            const URL = (req.query.state as string) || "/";
+
             return res
                 .status(200)
-                .cookie("accessToken", accessToken, option)
-                .cookie("refreshToken", refreshToken, option)
-                .redirect(`${process.env.CLIENT_ORIGIN!}/`)
+                .cookie("accessToken", accessToken, accessTokenOption)
+                .cookie("refreshToken", refreshToken, refreshTokenOption)
+                .redirect(`${process.env.CLIENT_ORIGIN}${URL}`)
 
         } catch (error) {
             console.error("GitHub login error:", error);

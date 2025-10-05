@@ -12,12 +12,12 @@ export default function SocialSignin() {
             </div>
 
             <div className="flex gap-2 mt-5">
-                <Link to={`${import.meta.env.VITE_SERVER_URL}/api/passport/google`}
+                <Link to={`${import.meta.env.VITE_SERVER_URL}/auth/google`}
                     className={ButtonVariants({ variant: "outlined", size: "default" })}>
                     <Google className="w-6 h-6" /> Google
                 </Link>
 
-                <Link to={`${import.meta.env.VITE_SERVER_URL}/api/passport/github`}
+                <Link to={`${import.meta.env.VITE_SERVER_URL}/auth/github`}
                     className={ButtonVariants({ variant: "outlined", size: "default" })}>
                     <Github className="w-6 h-6" /> Github
                 </Link>

@@ -4,7 +4,7 @@ import { useCanvas } from "../store/useCanvas";
 import { FabricImage, Path } from "fabric";
 import FabricText from "../components/FabricText";
 import { cn, formatPrice } from "../lib/utils";
-import { BASE_PRICE, FINISHES, MATERIALS } from "../lib/Constant";
+import { FINISHES, MATERIALS } from "../lib/Constant";
 import { Arrow } from "../components/Icons";
 import { ButtonVariants } from "../lib/ButtonVariant";
 import { useNavigate } from "react-router-dom";
@@ -12,18 +12,14 @@ import Uplaoder from "../components/Uploader";
 
 
 export default function Design() {
-    const { canvas, option, setOption, setData, getAllModels, setModel, model, models } = useCanvas((state) => state);
+    const { canvas, option, setOption, setState, getAllModels, setModel, model, models } = useCanvas();
 
     const navigate = useNavigate();
     const [image, setImage] = useState<File | null>();
 
-    const allModels = useCallback(() => { getAllModels() }, [getAllModels])
 
-    useEffect(() => {
-        if (models.length === 0) {
-            allModels()
-        }
-    }, [allModels, models.length]);
+    const AllModels = useCallback(() => { getAllModels() }, [getAllModels]);
+    useEffect(() => { if (models.length === 0) { AllModels() } }, [AllModels, models.length]);
 
 
     useEffect(() => {
@@ -80,7 +76,7 @@ export default function Design() {
     }, [canvas, image, model]);
 
 
-    const save = () => {
+    const handleSave = () => {
         if (!canvas) return;
 
         const object = canvas.getObjects().find(obj => obj.name === "model");
@@ -97,17 +93,16 @@ export default function Design() {
                 multiplier: 2,
                 enableRetinaScaling: true,
             })
-            setData(data);
+            setState(data);
         };
         navigate("/configure/preview");
     }
 
-
     return (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto" }}>
+        <div className="flex">
             <Fabric />
 
-            <div className="relative max-w-90 max-h-[38rem] overflow-y-auto flex flex-col gap-y-6 px-3">
+            <div className="relative w-full max-h-[40rem] bg-white overflow-y-auto flex flex-col gap-y-6 px-3">
 
                 <h1 className="text-3xl font-bold">Customize your case</h1>
 
@@ -118,9 +113,8 @@ export default function Design() {
                 />
 
                 <select
-                    name="phone models"
-                    title="phone model"
-                    id="phone model"
+                    name="Choose model"
+                    title="Choose model"
                     className="w-full flex-1 px-3 py-2"
                     onChange={(e) => setModel(e.target.value)}
                 >
@@ -138,11 +132,11 @@ export default function Design() {
 
                 <FabricText />
 
-                <div className="flex flex-col gap-4 mt-4">
+                <div className="flex flex-col gap-4">
                     {
                         [MATERIALS, FINISHES].map(({ name, options: opts }) => (
                             <div key={name}>
-                                <h2 className="text-sm font-medium mb-2 capitalize text-gray-600">
+                                <h2 className="text-sm font-medium mb-2 capitalize text-neutral-600">
                                     {name}
                                 </h2>
 
@@ -177,20 +171,14 @@ export default function Design() {
                     }
                 </div>
 
-                <div className="sticky bottom-0 h-20 w-full flex gap-4 items-center justify-between py-3  bg-white">
-                    <p className="w-40 text-black text-base font-medium whitespace-nowrap">
-                        {formatPrice((BASE_PRICE + option.finish.price + option.material.price))}
-                    </p>
-
-                    <button
-                        className={ButtonVariants({ size: "sm", className: "bg-brand shadow" })}
-                        onClick={save}
+                <div className="w-full sticky bottom-0 z-50 bg-white pt-3 shadow">
+                    <button className={ButtonVariants({ size: "sm", className: " bg-brand rounded-none" })}
+                        onClick={handleSave}
                     >
                         Continue
                         <Arrow className="text-black size-6" />
                     </button>
                 </div>
-
             </div>
         </div>
     )

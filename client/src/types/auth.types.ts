@@ -4,6 +4,7 @@ export interface userState {
     user: userType;
     hydrated: boolean;
     isAuthenticated: boolean;
+    resendAttempts: number;
 };
 
 export interface action {
@@ -12,4 +13,6 @@ export interface action {
     getProfile: () => Promise<void>;
     setHydrated: () => void;
     SignOut: () => void;
+    ResendVerification: () => void;
+    setUser: (user: userState["user"]) => void;
 };

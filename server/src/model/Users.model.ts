@@ -9,8 +9,7 @@ const userSchema = new Schema<userType>({
         type: String,
         required: true,
         trim: true,
-        minlength: [5, "username must be at least 3 characters"],
-        maxlength: [30, "username must be at most 30 characters"],
+        minlength: 5
     },
     email: {
         type: String,
@@ -19,16 +18,20 @@ const userSchema = new Schema<userType>({
         trim: true,
         match: [/\S+@\S+\.\S+/, "invalid email"],
     },
-    Number: {
+    phone: {
         type: String,
         unique: true,
-        trim: true
+        trim: true,
+        match: [/^\d{10}$/, "Please fill a valid 10-digit phone number."]
     },
     password: {
         type: String,
         trim: true,
-        minlenght: 8,
-        maxlenght: 16
+        required: function () {
+            return !this.providers || this.providers.length === 0;
+        },
+        minlength: 8,
+        select: false,
     },
     profileImage: {
         publicId: {
@@ -41,64 +44,46 @@ const userSchema = new Schema<userType>({
         }
     },
     address: {
-        houseNo: {
+        address_line_1: { type: String, trim: true },
+        address_line_2: { type: String, trim: true },
+        landmark: { type: String, trim: true },
+        city: { type: String, trim: true },
+        state: { type: String, trim: true },
+        pincode: {
             type: String,
-        },
-        street: {
-            type: String,
-        },
-        locality: {
-            type: String,
-        },
-        sector: {
-            type: String,
-        },
-        city: {
-            type: String,
-        },
-        state: {
-            type: String,
-        },
-        postalCode: {
-            type: String,
+            trim: true,
+            match: [/^\d{6}$/, "Please fill a valid 6-digit pincode."]
         },
         country: {
             type: String,
+            required: true,
             default: "India"
-        },
+        }
     },
-    providers: {
-        type: [String],
-        default: []
-    },
-    googleId: {
-        type: String,
-        unique: true,
-        sparse: true,
-    },
-    githubId: {
-        type: String,
-        unique: true,
-        sparse: true,
-    },
+    providers: [{
+        _id: false,
+        provider: { type: String },
+        providerId: { type: String }
+    }],
     refreshToken: {
         type: String,
         default: ""
     },
-    isVerified: {
+    verified: {
         type: Boolean,
         default: false
     },
     verificationCode: {
         type: Number,
-        default: undefined
+        default: undefined,
+        select: false,
     },
     verificationCodeExpiry: {
         type: Date,
-        default: undefined
+        default: undefined,
+        select: false,
     }
 }, { timestamps: true });
-
 
 
 userSchema.pre("save", async function (next) {
@@ -108,7 +93,7 @@ userSchema.pre("save", async function (next) {
     next();
 });
 
-userSchema.methods.isPasswordCorrect = async function (password: string) {
+userSchema.methods.passwordValidation = async function (password: string) {
     if (this.password) {
         return await bcrypt.compare(password, this.password);
     }
@@ -124,7 +109,7 @@ userSchema.methods.generateAccessToken = function () {
         } as jwtToken,
         process.env.ACCESS_TOKEN_SECRET!,
         {
-            expiresIn: "3d"
+            expiresIn: "1h"
         }
     )
 };

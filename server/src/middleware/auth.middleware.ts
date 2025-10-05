@@ -9,17 +9,21 @@ export const verifyJwtToken = async (req: Request, res: Response, next: NextFunc
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
 
         if (!token) {
-            res.status(400).json({ success: false, message: "No token found, please sign in." });
-            return;
+            return res.status(400).json({
+                success: false,
+                message: "No token found, please sign in."
+            });
         }
 
-        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!) as jwtToken;
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as jwtToken;
 
-        const user = await Users.findById(decoded.id).select("-password -refreshToken");
+        const user = await Users.findOne({ $or: [{ "_id": decoded.id }, { "email": decoded.email }] });
 
         if (!user) {
-            res.status(404).json({ success: false, message: "Unauthorized access." });
-            return;
+            return res.status(404).json({
+                success: false,
+                message: "Unauthorized access."
+            });
         }
 
         req.auth = user;

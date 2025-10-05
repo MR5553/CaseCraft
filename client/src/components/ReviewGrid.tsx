@@ -61,6 +61,7 @@ const ReviewColumn = ({ reviews, className, inView, speed = 50 }: { reviews: str
                     key={i}
                     src={src}
                     alt="phone"
+                    loading="lazy"
                     className="w-70 h-auto py-4 pointer-events-none select-none"
                 />
             ))}

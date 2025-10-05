@@ -10,7 +10,7 @@ interface btn extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<type
     endIcon?: ReactNode;
 }
 
-export const Button = ({ children, className, variant, size, endIcon, startIcon, ...props }: btn) => {
+const Button = ({ children, className, variant, size, endIcon, startIcon, ...props }: btn) => {
     return (
         <button
             className={cn(ButtonVariants({ variant, size, className }))}
@@ -22,3 +22,5 @@ export const Button = ({ children, className, variant, size, endIcon, startIcon,
         </button>
     )
 };
+
+export default Button;

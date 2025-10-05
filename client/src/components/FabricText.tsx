@@ -1,7 +1,7 @@
 import { Textbox } from "fabric";
 import { useState, type CSSProperties } from "react"
-import { Input } from "./Input";
-import { Button } from "./Button";
+import Input from "./Input";
+import Button from "./Button";
 import { useCanvas } from "../store/useCanvas";
 import { FONT_WEIGHTS, Fonts } from "../lib/Constant";
 import type { TextOptions } from "../types/TextOptions.type";
@@ -60,7 +60,7 @@ export default function FabricText() {
 
 
     return (
-        <div className="relative flex flex-col gap-6">
+        <div className="relative flex flex-col gap-y-6">
             <div className="w-full flex gap-2 justify-between">
                 <Input
                     name="text"
@@ -184,6 +184,7 @@ export default function FabricText() {
                             key={value}
                             value={value}
                             style={{ fontWeight: value }}
+                            className={cn({ "text-brand": value === Number(properties.fontWeight) })}
                         >
                             {label}
                         </option>
@@ -192,8 +193,8 @@ export default function FabricText() {
             </div>
 
             <div className="relative flex flex-col gap-2">
-                <label htmlFor="Character spacing" className="text-sm text-neutral-500 mb-1">
-                    Character Spacing
+                <label htmlFor="Character spacing" className="text-sm text-neutral-600 mb-1">
+                    Character spacing
                 </label>
                 <Slider
                     name="Character spacing"

@@ -49,7 +49,7 @@ import orderRoute from "./routes/order.route";
 
 
 app.use("/api/auth", userRoute);
-app.use("/api/passport", authRoute);
+app.use("/auth", authRoute);
 app.use("/api/model", modelRoute)
 app.use("/api/payment", orderRoute)
 

@@ -15,30 +15,30 @@ type Option = {
 
 type state = {
     canvas: Canvas | null;
+    State: string;
     modelImage: string;
     uploadedImage: string;
     option: Option;
-    data: string;
     models: Model[];
     model: Model | null;
 }
 
 interface action {
     setCanvas: (canvas: Canvas) => void;
-    setModelImage: (name: string) => void;
+    setTemplateImage: (name: string) => void;
     setUploadedImage: (url: string) => void;
-    setData: (data: string) => void;
     setOption: <K extends keyof Option>(key: K, value: Option[K]) => void;
     getAllModels: () => void;
     setModel: (id: string) => void;
+    setState: (State: string) => void;
 }
 
 
 export const useCanvas = create<state & action>((set) => ({
     canvas: null,
+    State: "",
     modelImage: "",
     uploadedImage: "",
-    data: "",
     option: {
         material: MATERIALS.options[0],
         finish: FINISHES.options[0],
@@ -47,16 +47,18 @@ export const useCanvas = create<state & action>((set) => ({
     model: null,
 
     setCanvas: (canvas: Canvas) => set({ canvas: canvas }),
-    setModelImage: (name: string) => set({ modelImage: name }),
+    setTemplateImage: (name: string) => set({ modelImage: name }),
     setUploadedImage: (url: string) => set({ uploadedImage: url }),
-    setData: (data: string) => set({ data: data }),
     setOption: (key, value) => set((state) => ({
         option: { ...state.option, [key]: value },
     })),
+    setState: (state) => {
+        set({ State: state })
+    },
 
     getAllModels: async () => {
         try {
-            const { data } = await api.post(`api/model/getAllModels`);
+            const { data } = await api.get(`/api/model/models`);
 
             if (data.success) {
                 set({ models: data.models });

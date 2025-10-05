@@ -14,7 +14,7 @@ export default async function db() {
             console.log("⚠️ MongoDB disconnected!");
         });
 
-        await mongoose.connect(process.env.MONGODB_URI!, { dbName: "playSync" });
+        await mongoose.connect(process.env.MONGODB_URI as string, { dbName: "CaseCraft" });
     } catch (error) {
         console.error("Unable to connect to the database:", error);
         process.exit(1);

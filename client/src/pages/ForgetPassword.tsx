@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
-import { Button } from "../components/Button";
-import { Input } from "../components/Input";
+import Button from "../components/Button";
+import Input from "../components/Input";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { emailSchema } from "../lib/schema";
 import { api } from "../lib/axios";
@@ -39,8 +39,9 @@ export default function ForgetPassword() {
                     <h1 className="text-3xl font-semibold text-neutral-800 tracking-wider">
                         Forget password
                     </h1>
-                    <p className="max-w-[40ch] text-neutral-700 font-normal mt-4">
-                        Please enter your email address. We'll send you instructions to reset your password.
+                    <p className="max-w-[40ch] text-neutral-500 font-normal mt-4">
+                        1. Please enter your email address blow 👇 <br />
+                        2. We'll send you OTP to reset your password.
                     </p>
                 </div>
 

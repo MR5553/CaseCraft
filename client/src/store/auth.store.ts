@@ -14,35 +14,43 @@ const initialState: userState = {
         _id: "",
         name: "",
         email: "",
-        Number: "",
+        phone: "",
         profileImage: {
             publicId: "",
             imageUrl: "",
         },
-        providers: [],
-        googleId: "",
-        githubId: "",
-        isVerified: false,
+        address: {
+            address_line_1: "",
+            address_line_2: "",
+            city: "",
+            country: "",
+            landmark: "",
+            pincode: "",
+            state: ""
+        },
+        providers: [{ provider: "", providerId: "" }],
+        verified: false,
+        refreshToken: "",
         createdAt: "",
-        updatedAt: "",
-        refreshToken: ""
+        updatedAt: ""
     },
     hydrated: false,
     isAuthenticated: false,
+    resendAttempts: 0,
 }
 
 
 export const useAuth = create<userState & action>()(
     persist(
-        immer((set) => ({
+        immer((set, get) => ({
             ...initialState,
 
             SignIn: async (email, password) => {
                 try {
-                    const { data } = await api.post<res<userType>>("api/auth/sign-in", { email, password });
+                    const { data } = await api.post<res<userType>>("api/auth/signin", { email, password });
 
                     if (data.success) {
-                        set({ user: data.user, isAuthenticated: data.user.isVerified });
+                        set({ user: data.user, isAuthenticated: data.user.verified });
                         toast.success(data.message)
                     }
 
@@ -54,7 +62,7 @@ export const useAuth = create<userState & action>()(
 
             Signup: async (name, email, password) => {
                 try {
-                    const { data } = await api.post<res<userType>>("api/auth/sign-up", { name, email, password });
+                    const { data } = await api.post<res<userType>>("api/auth/signup", { name, email, password });
 
                     if (data.success) set({ user: data.user });
 
@@ -66,10 +74,11 @@ export const useAuth = create<userState & action>()(
 
             getProfile: async () => {
                 try {
-                    const { data } = await api.get<res<userType>>("api/auth/get-profile");
+                    const { data } = await api.get<res<userType>>("api/auth/me");
+                    console.log(data);
 
                     if (data.success) {
-                        set({ user: data.user, isAuthenticated: data.user.isVerified });
+                        set({ user: data.user, isAuthenticated: data.user.verified });
                     }
 
                 } catch (error) {
@@ -80,7 +89,7 @@ export const useAuth = create<userState & action>()(
 
             SignOut: async () => {
                 try {
-                    const { data } = await api.get<res<userType>>("api/auth/sign-out");
+                    const { data } = await api.get<res<userType>>("api/auth/signout");
 
                     if (data.success) set({ ...initialState, hydrated: true });
 
@@ -88,6 +97,34 @@ export const useAuth = create<userState & action>()(
                     const err = error as AxiosError<apiError>;
                     toast.error(err.response?.data.message)
                 }
+            },
+
+            ResendVerification: async () => {
+                try {
+                    set((state) => {
+                        if (state.resendAttempts >= 5) {
+                            toast.error("You have reached the maximum resend attempts (5).");
+                            return state;
+                        }
+
+                        return { resendAttempts: state.resendAttempts + 1 };
+                    });
+
+                    const { data } = await api.post<res<userType>>(`api/auth/resend-verification-code/${get().user._id}`
+                    );
+
+                    if (data.success) {
+                        toast.success(data.message || "Verification code sent!");
+                    }
+
+                } catch (error) {
+                    const err = error as AxiosError<apiError>;
+                    toast.error(err.response?.data.message);
+                }
+            },
+
+            setUser: (user) => {
+                set({ user: user })
             },
 
             setHydrated: () => set({ hydrated: true }),

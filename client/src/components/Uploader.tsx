@@ -54,7 +54,7 @@ export default function Uplaoder({ onUploadFile, accept, size, className, ...pro
     };
 
     return (
-        <div className={cn("w-full py-10 hover:bg-neutral-100 border-2 border-dashed border-neutral-200 rounded-xl cursor-pointer", drag && "bg-brand/20 border-brand", className)}
+        <div className={cn("w-full py-10 bg-neutral-50 hover:bg-neutral-100 border-2 border-dashed border-neutral-200 rounded-xl cursor-pointer", drag && "bg-brand/40 border-brand", className)}
             role="button"
             aria-label="File upload area"
             tabIndex={0}

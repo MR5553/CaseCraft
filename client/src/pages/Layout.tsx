@@ -9,7 +9,7 @@ export function PIRVATE() {
         return <Navigate to="sign-in" state={{ from: location }} replace />
     }
 
-    if (user && !user.isVerified) {
+    if (user && !user.verified) {
         return <Navigate to={`/verify-otp/${user._id}`} state={{ from: location }} replace />
     }
 
@@ -20,7 +20,7 @@ export function PUBLIC() {
     const { user, isAuthenticated } = useAuth();
     const location = useLocation();
 
-    if (isAuthenticated && user.isVerified) {
+    if (isAuthenticated && user.verified) {
         return <Navigate to="/" state={{ from: location }} replace />
     }
 

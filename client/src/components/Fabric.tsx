@@ -6,7 +6,7 @@ import { useCanvas } from "../store/useCanvas";
 
 export default function Fabric() {
     const ref = useRef<HTMLCanvasElement>(null);
-    const { canvas, setCanvas, setModelImage, model } = useCanvas();
+    const { canvas, setCanvas, setTemplateImage, model } = useCanvas();
 
 
     useEffect(() => {
@@ -27,7 +27,7 @@ export default function Fabric() {
             };
 
             canvas = new Canvas(ref.current, {
-                width: 1200,
+                width: 1140,
                 height: 1000,
                 selection: true,
                 skipOffscreen: true,
@@ -39,7 +39,7 @@ export default function Fabric() {
                 imageSmoothingEnabled: true,
                 preserveObjectStacking: true,
             });
-            canvas.setDimensions({ width: "auto", height: "38rem" }, { cssOnly: true });
+            canvas.setDimensions({ width: "auto", height: "40rem" }, { cssOnly: true });
 
 
             const Image = await FabricImage.fromURL(model.image.URL, { crossOrigin: "anonymous" });
@@ -64,7 +64,7 @@ export default function Fabric() {
             canvas.sendObjectToBack(Image);
             canvas.add(Image);
 
-            setModelImage(Image.name || "model");
+            setTemplateImage(Image.name || "model");
             setCanvas(canvas);
             canvas.requestRenderAll();
         };
@@ -73,13 +73,13 @@ export default function Fabric() {
 
         return () => { if (canvas) canvas.dispose() };
 
-    }, [model, setCanvas, setModelImage]);
+    }, [model, setCanvas, setTemplateImage]);
 
 
     useEffect(() => {
         if (!canvas) return;
 
-        canvas._initialize();
+        canvas.initialize();
 
         const handler = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === "z") {
@@ -106,7 +106,7 @@ export default function Fabric() {
 
 
     return (
-        <div className="bg-neutral-100 border border-neutral-300 rounded-xl">
+        <div className="w-fit bg-neutral-100 border border-neutral-200 rounded-xl mx-auto">
             <canvas ref={ref} />
         </div>
     );

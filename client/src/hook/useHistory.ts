@@ -1,19 +1,15 @@
 import { Canvas, FabricObject } from "fabric";
 
 const originalToObject = FabricObject.prototype.toObject;
+FabricObject.prototype.toObject = function (propertiesToInclude?: string[]) {
+    const extraProps = ["selectable", "evented", "hasControls", "hasBorders"];
+    return originalToObject.call(this, [
+        ...(propertiesToInclude || []),
+        ...extraProps,
+    ]);
+};
 
-FabricObject.prototype.toObject = (function (propertiesToInclude?: string[]) {
-    const extraProps = [
-        "selectable",
-        "evented",
-        "hasControls",
-        "hasBorders",
-    ];
-
-    return originalToObject.call(this, [...(propertiesToInclude || []), ...extraProps])
-});
-
-Canvas.prototype._initialize = (function (originalFn) {
+Canvas.prototype.initialize = (function (originalFn) {
     return function (this: Canvas, ...args) {
         if (originalFn) {
             originalFn.apply(this, args);
@@ -21,13 +17,14 @@ Canvas.prototype._initialize = (function (originalFn) {
         this._history();
         return this;
     };
-})(Canvas.prototype._initialize);
+})(Canvas.prototype.initialize);
 
 
 Canvas.prototype.dispose = (function (originalFn) {
-    return async function (this: Canvas, ...args): Promise<boolean> {
-        await originalFn.call(this, ...args);
-        return true;
+    return function (this: Canvas, ...args): Promise<boolean> {
+        originalFn.apply(this, args);
+        this._dispose();
+        return Promise.resolve(true);
     };
 })(Canvas.prototype.dispose);
 
@@ -46,7 +43,9 @@ Canvas.prototype._events = function () {
 };
 
 Canvas.prototype._dispose = function () {
-    this.off(this._events());
+    if (this._boundEvents) {
+        this.off(this._boundEvents);
+    }
 };
 
 
@@ -55,7 +54,9 @@ Canvas.prototype._history = function () {
     this.redoStack = [];
     this.nextState = this._state();
 
-    this.on(this._events());
+    this._boundEvents = this._events();
+    this.on(this._boundEvents);
+
     this.undoStack.push(this._state());
 };
 
@@ -67,61 +68,60 @@ Canvas.prototype._action = function (e) {
         const json = this.nextState;
         this.undoStack.push(json);
         this.nextState = this._state();
-        this.fire("history:append", { json: json });
+        this.fire("history:append", { json });
     }
 };
 
 
-Canvas.prototype._undo = async function (callback) {
-    const currentState = this.undoStack.pop();
+Canvas.prototype._undo = function (callback) {
+    if (this.undoStack.length <= 1) {
+        this.isProcessing = false;
+        return;
+    }
 
+    const currentState = this.undoStack.pop();
     if (currentState) {
         this.redoStack.push(this._state());
         this.nextState = currentState;
-
         this._loadHistory(currentState, "history:undo", callback);
-
-    } else { this.isProcessing = false }
-};
-
-
-Canvas.prototype._redo = async function (callback) {
-    const currentState = this.redoStack.pop();
-
-    if (currentState) {
-        this.undoStack.push(this._state())
-        this.nextState = currentState;
-
-        this._loadHistory(currentState, "history:redo", callback)
     }
-
 };
 
-Canvas.prototype._deleteObject = function (targets) {
+
+Canvas.prototype._redo = function (callback) {
+    const currentState = this.redoStack.pop();
+    if (currentState) {
+        this.undoStack.push(this._state());
+        this.nextState = currentState;
+        this._loadHistory(currentState, "history:redo", callback);
+    }
+};
+
+Canvas.prototype._deleteObject = function (targets: FabricObject[]) {
     if (!targets || targets.length === 0) return;
 
     this.undoStack.push(this._state());
 
-    targets.forEach(obj => this.remove(obj));
+    targets.forEach((obj) => this.remove(obj));
     this.discardActiveObject();
     this.requestRenderAll();
 
     this.nextState = this._state();
-    this.fire("history:append", { json: this.nextState })
-}
+    this.fire("history:append", { json: this.nextState });
+};
 
 
-Canvas.prototype._loadHistory = async function (json, event, callback) {
+Canvas.prototype._loadHistory = function (json, event, callback) {
+    if (this.isProcessing) return;
     this.isProcessing = true;
 
     this.loadFromJSON(json, () => {
         this.requestRenderAll();
-        this.fire(event)
+        this.fire(event);
         this.isProcessing = false;
 
         if (callback && typeof callback === "function") callback();
     });
-
 };
 
 
@@ -133,9 +133,8 @@ Canvas.prototype._clearHistory = function () {
 
 
 Canvas.prototype._canUndo = function () {
-    return this.undoStack.length > 0;
+    return this.undoStack.length > 1;
 };
-
 Canvas.prototype._canRedo = function () {
     return this.redoStack.length > 0;
-}
+};

@@ -25,13 +25,13 @@ export default function Steps() {
                         >
                             <Link to={`/configure${step.url}`} className="w-full" title={step.name}>
                                 <span
-                                    className={cn("absolute left-0 top-0 h-full w-1 bg-neutral-300 md:bottom-0 md:top-auto md:h-1 md:w-full", { "bg-neutral-500": isCurrent, "bg-green-700": isCompleted })}
+                                    className={cn("absolute left-0 top-0 h-full w-1 bg-neutral-300 md:bottom-0 md:top-auto md:h-1 md:w-full", { "bg-neutral-500": isCurrent, "bg-brand": isCompleted })}
                                     aria-hidden="true"
                                 />
 
                                 <span className="flex flex-col gap-1 justify-center">
                                     <span
-                                        className={cn("text-sm font-semibold text-neutral-600", { "text-neutral-600": isCurrent, "text-green-700": isCompleted })}
+                                        className={cn("text-sm font-semibold text-neutral-600", { "text-neutral-600": isCurrent, "text-brand": isCompleted })}
                                     >
                                         {step.name}
                                     </span>

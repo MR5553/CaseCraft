@@ -10,7 +10,7 @@ export declare module "fabric" {
     }
 
     interface Canvas {
-        _initialize: () => void;
+        initialize: (...args: unknown[]) => void;
         _state: () => object;
         _events: () => Record<string, (e: { target: FabricObject }) => void>;
         _history: () => void;
@@ -23,11 +23,15 @@ export declare module "fabric" {
         _canUndo: () => boolean;
         _canRedo: () => boolean;
         _clearHistory: () => void;
+
+        // stacks
         undoStack: object[];
-        redoStack: object[]
+        redoStack: object[];
         isProcessing: boolean;
         nextState: object;
-        extra: ["selectable", "evented", "hasControls", "hasBorders", "objectCaching"]
+
+        // internal reference to bound events
+        _boundEvents: Record<string, (e: { target: FabricObject }) => void>;
     }
 }
 

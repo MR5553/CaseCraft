@@ -1,9 +1,13 @@
+import { useLocation } from "react-router-dom";
 import { BASE_PRICE } from "../lib/Constant";
 import { formatPrice } from "../lib/utils";
 import { useCanvas } from "../store/useCanvas";
+import { useAuth } from "../store/auth.store";
 
 export default function Checkout() {
-    const { data, option } = useCanvas();
+    const { State, option } = useCanvas();
+    const { user } = useAuth();
+    const { state } = useLocation();
 
 
     return (
@@ -18,7 +22,7 @@ export default function Checkout() {
             <div className="flex flex-col gap-y-10 mt-10">
                 <div className="flex flex-col">
                     <p className="font-medium  text-xl">Order number</p>
-                    <p className="text-neutral-600">scddjhtuydxyukxlisfieyguvbdfgew</p>
+                    <p className="text-neutral-600">{state?.orderId}</p>
                 </div>
 
                 <hr className="text-neutral-200" />
@@ -35,7 +39,7 @@ export default function Checkout() {
 
                 <div className="flex justify-center items-center h-max w-full py-10 bg-neutral-100 border border-neutral-200 rounded-2xl">
                     <img
-                        src={data || undefined}
+                        src={State || undefined}
                         alt="preview.png"
                         className="max-w-80 h-auto object-cover"
                     />
@@ -44,24 +48,24 @@ export default function Checkout() {
                 <div className="max-w-3xl flex items-center justify-between">
                     <div>
                         <p className="font-medium mb-2">Shipping address</p>
-                        <p className="text-sm">
-                            Munna Kumar <br />
-                            House No. 87, Gali No. 3 <br />
-                            Shivaji Nagar <br />
-                            Sector 11 <br />
-                            Gurugram, Haryana - 122001 <br />
-                            India <br />
+                        <p className="flex flex-col gap-1 text-sm">
+                            <span>{user.name} </span>
+                            <span>{user.address.address_line_1}</span>
+                            <span>{user.address.address_line_2}</span>
+                            <span>{user.address.landmark}</span>
+                            <span>{user.address.city},{user.address.state} - {user.address.pincode}</span>
+                            <span>{user.address.country}</span>
                         </p>
                     </div>
                     <div>
                         <p className="font-medium mb-2">Billing address</p>
-                        <p className="text-sm">
-                            Munna Kumar <br />
-                            House No. 87, Gali No. 3 <br />
-                            Shivaji Nagar <br />
-                            Sector 11 <br />
-                            Gurugram, Haryana - 122001 <br />
-                            India <br />
+                        <p className="flex flex-col gap-1 text-sm">
+                            <span>{user.name} </span>
+                            <span>{user.address.address_line_1}</span>
+                            <span>{user.address.address_line_2}</span>
+                            <span>{user.address.landmark}</span>
+                            <span>{user.address.city},{user.address.state} - {user.address.pincode}</span>
+                            <span>{user.address.country}</span>
                         </p>
                     </div>
                 </div>

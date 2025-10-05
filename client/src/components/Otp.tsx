@@ -1,19 +1,19 @@
-import { Input } from "../components/Input";
+import Input from "../components/Input";
 import { type ChangeEvent, type ClipboardEvent, type HTMLAttributes, type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 
 interface props extends HTMLAttributes<HTMLInputElement> {
     length: number,
-    onOtpChange: (value: number) => void;
+    onOtpChange: (value: string) => void;
 }
 
 export default function OtpBox({ length, onOtpChange }: props) {
     const [otp, setOtp] = useState(new Array(length).fill(""));
-    const inputRef = useRef([] as HTMLInputElement[]);
+    const ref = useRef([] as HTMLInputElement[]);
 
     useEffect(() => {
-        if (inputRef.current[0]) {
-            inputRef.current[0].focus();
+        if (ref.current[0]) {
+            ref.current[0].focus();
         }
     }, []);
 
@@ -29,14 +29,14 @@ export default function OtpBox({ length, onOtpChange }: props) {
         if (value && index < length - 1) {
             for (let i = index + 1; i < length; i++) {
                 if (newVal[i] === "") {
-                    inputRef.current[i]?.focus();
+                    ref.current[i]?.focus();
                     break;
                 }
             }
         }
 
         const otpValue = newVal.join("");
-        return onOtpChange(Number(otpValue));
+        return onOtpChange(otpValue);
     }
 
     const handlePaste = (e: ClipboardEvent<HTMLInputElement>, index: number) => {
@@ -56,22 +56,22 @@ export default function OtpBox({ length, onOtpChange }: props) {
         const nextEmptyIndex = newOtp.findIndex((val, idx) => idx >= index && val === "");
 
         if (nextEmptyIndex !== -1) {
-            inputRef.current[nextEmptyIndex]?.focus();
+            ref.current[nextEmptyIndex]?.focus();
         } else {
-            inputRef.current[length - 1]?.focus();
+            ref.current[length - 1]?.focus();
         }
 
         const otpValue = newOtp.join("");
-        return onOtpChange(Number(otpValue));
+        return onOtpChange(otpValue);
     }
 
     const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, index: number) => {
         if (e.key === "Backspace" && !otp[index] && index > 0) {
-            inputRef.current[index - 1]?.focus();
+            ref.current[index - 1]?.focus();
         } else if (e.key === "ArrowLeft" && index > 0) {
-            inputRef.current[index - 1]?.focus();
+            ref.current[index - 1]?.focus();
         } else if (e.key === "ArrowRight" && index < length - 1) {
-            inputRef.current[index + 1]?.focus();
+            ref.current[index + 1]?.focus();
         }
     }
 
@@ -87,7 +87,7 @@ export default function OtpBox({ length, onOtpChange }: props) {
                     onPaste={(e) => handlePaste(e, index)}
                     onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, index)}
                     className="size-10 text-center text-sm font-medium"
-                    ref={(input) => { inputRef.current[index] = input! }}
+                    ref={(input) => { ref.current[index] = input! }}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange(e, index)}
                 />
             ))}

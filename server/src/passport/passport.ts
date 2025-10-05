@@ -8,8 +8,8 @@ import { userType } from "../types/user.types";
 
 passport.use(new GitHubStrategy(
     {
-        clientID: process.env.GITHUB_CLIENT_ID!,
-        clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+        clientID: process.env.GITHUB_CLIENT_ID as string,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
         callbackURL: `${process.env.SERVER_URL}/auth/github/callback`,
         scope: ["user:email"]
     },
@@ -18,34 +18,28 @@ passport.use(new GitHubStrategy(
             const email = profile.emails?.[0]?.value;
             const image = profile.photos?.[0]?.value;
 
-            const isUserExists = await Users.findOne({
-                $or: [
-                    { "email": email },
-                    { "githubId": profile.id }
-                ]
-            });
+            let user = await Users.findOne({ email });
 
-            if (isUserExists) {
-                if (!isUserExists.githubId) {
-                    isUserExists.githubId = profile.id;
-                    isUserExists.providers.push(profile.provider);
+            if (user) {
+                const hasGitHub = user.providers.some((p) => p.provider === "github" && p.providerId === profile.id
+                );
 
-                    await isUserExists.save();
+                if (!hasGitHub) {
+                    user.providers.push({ provider: "github", providerId: profile.id });
+                    await user.save();
                 }
 
-                return done(null, isUserExists as userType);
+                return done(null, user as userType);
             }
 
-            const user = await Users.create({
+            user = await Users.create({
                 name: profile.displayName || profile.username,
-                email: email,
-                profileImage: {
-                    imageUrl: image
-                },
-                githubId: profile.id,
-                providers: profile.provider,
-                isVerified: true
+                email,
+                profileImage: { imageUrl: image },
+                providers: [{ provider: "github", providerId: profile.id }],
+                verified: true,
             });
+
             return done(null, user as userType);
 
         } catch (error) {
@@ -56,8 +50,8 @@ passport.use(new GitHubStrategy(
 
 passport.use(new GoogleStrategy(
     {
-        clientID: process.env.GOOGLE_CLIENT_ID!,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        clientID: process.env.GOOGLE_CLIENT_ID as string,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
         callbackURL: `${process.env.SERVER_URL}/auth/google/callback`,
         scope: ["user:email"]
     },
@@ -66,33 +60,26 @@ passport.use(new GoogleStrategy(
             const email = profile.emails![0].value;
             const image = profile.photos![0].value;
 
-            const isUserExists = await Users.findOne({
-                $or: [
-                    { "email": email },
-                    { "googleId": profile.id }
-                ]
-            });
+            let user = await Users.findOne({ email });
 
-            if (isUserExists) {
-                if (!isUserExists.googleId) {
-                    isUserExists.googleId = profile.id;
-                    isUserExists.providers.push(profile.provider);
+            if (user) {
+                const hasGoogle = user.providers.some((p) => p.provider === "google" && p.providerId === profile.id
+                );
 
-                    await isUserExists.save();
+                if (!hasGoogle) {
+                    user.providers.push({ provider: "google", providerId: profile.id });
+                    await user.save();
                 }
 
-                return done(null, isUserExists as userType)
+                return done(null, user as userType);
             }
 
-            const user = await Users.create({
+            user = await Users.create({
                 name: profile.displayName || profile.username,
-                email: email,
-                profileImage: {
-                    imageUrl: image
-                },
-                providers: profile.provider,
-                googleId: profile.id,
-                isVerified: profile._json.email_verified
+                email,
+                profileImage: { imageUrl: image },
+                providers: [{ provider: "google", providerId: profile.id }],
+                verified: profile._json.email_verified ?? false,
             });
             return done(null, user as userType);
 

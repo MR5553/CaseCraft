@@ -4,9 +4,10 @@ import { useState } from "react";
 import { signUpSchema } from "../lib/schema";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Input } from "../components/Input";
-import { Button } from "../components/Button";
+import Input from "../components/Input";
+import Button from "../components/Button";
 import SocialSignin from "../components/Social-Signin";
+
 
 export default function Signup() {
     const [visible, setVisible] = useState<boolean>(false);
