@@ -9,7 +9,7 @@ const userSchema = new Schema<userType>({
         type: String,
         required: true,
         trim: true,
-        minlength: 5
+        minlength: 3
     },
     email: {
         type: String,
@@ -22,7 +22,8 @@ const userSchema = new Schema<userType>({
         type: String,
         unique: true,
         trim: true,
-        match: [/^\d{10}$/, "Please fill a valid 10-digit phone number."]
+        match: [/^\d{10}$/, "Please fill a valid 10-digit phone number."],
+        sparse: true
     },
     password: {
         type: String,
@@ -69,20 +70,23 @@ const userSchema = new Schema<userType>({
         type: String,
         default: ""
     },
+    token: {
+        type: String,
+        default: "",
+        select: false
+    },
     verified: {
         type: Boolean,
         default: false
     },
     verificationCode: {
         type: Number,
-        default: undefined,
         select: false,
     },
     verificationCodeExpiry: {
         type: Date,
-        default: undefined,
         select: false,
-    }
+    },
 }, { timestamps: true });
 
 
@@ -105,9 +109,8 @@ userSchema.methods.generateAccessToken = function () {
         {
             id: this._id,
             email: this.email,
-            username: this.username,
         } as jwtToken,
-        process.env.ACCESS_TOKEN_SECRET!,
+        process.env.ACCESS_TOKEN_SECRET as string,
         {
             expiresIn: "1h"
         }
@@ -119,9 +122,8 @@ userSchema.methods.generateRefreshToken = function () {
         {
             id: this._id,
             email: this.email,
-            username: this.username,
         } as jwtToken,
-        process.env.REFRESH_TOKEN_SECRET!,
+        process.env.REFRESH_TOKEN_SECRET as string,
         {
             expiresIn: "30d"
         }

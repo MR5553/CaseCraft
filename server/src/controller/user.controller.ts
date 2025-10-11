@@ -1,30 +1,13 @@
-import { CookieOptions, Request, Response } from "express";
+import { Request, Response } from "express";
 import { Users } from "../model/Users.model";
 import { userType } from "../types/user.types";
 import crypto from "node:crypto";
 // import { EmailVerification } from "../mail/template.mail";
-import { isValidObjectId } from "mongoose";
 import jwt from "jsonwebtoken";
 import { jwtToken } from "../types/jwt.types";
 import { deleteFromCloudinary, UploadOnCloudinary } from "../utils/Cloudinary";
-
-
-export const refreshTokenOption: CookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none",
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-    path: "/",
-};
-
-
-export const accessTokenOption: CookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none",
-    maxAge: 60 * 60 * 1000,
-    path: "/",
-};
+import { isValidObjectId } from "mongoose";
+import Option from "../utils/Cookie";
 
 
 export async function generateToken(userId: string) {
@@ -53,9 +36,9 @@ const signup = async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: "Name, Email & Password are required." });
         }
 
-        const existingUser = await Users.findOne({ email });
+        const exist = await Users.findOne({ email });
 
-        if (existingUser) {
+        if (exist) {
             return res.status(409).json({
                 success: false,
                 message: "User already exists, please signin instead."
@@ -115,16 +98,10 @@ const signin = async (req: Request, res: Response) => {
         }
 
         if (!user.verified) {
-            return res.status(401).json({
+            return res.status(400).json({
+                userId: user.id,
                 success: false,
                 message: "Please verify your email to continue"
-            });
-        }
-
-        if (!user || !user.password) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid credentials or user not found."
             });
         }
 
@@ -139,12 +116,12 @@ const signin = async (req: Request, res: Response) => {
 
         const { accessToken, refreshToken } = await generateToken(user.id);
 
-        const userResponse = user.toJSON() as userType;
+        const userResponse = user.toJSON();
         delete userResponse.password;
 
         return res.status(200)
-            .cookie("accessToken", accessToken, accessTokenOption)
-            .cookie("refreshToken", refreshToken, refreshTokenOption)
+            .cookie("accessToken", accessToken, Option.access)
+            .cookie("refreshToken", refreshToken, Option.refresh)
             .json({
                 success: true,
                 message: "User logged in successfully.",
@@ -174,7 +151,7 @@ const VerifyEmail = async (req: Request, res: Response) => {
             return res.status(409).json({ message: "Invalid user id." });
         }
 
-        const user = await Users.findById(req.params.id).select("+verificationCode +verificationCodeExpiry") as userType;
+        const user = await Users.findById(req.params.id).select("+verification_code +verification_code_expiry");
 
         if (!user) {
             return res.status(404).json({ message: "User not found." });
@@ -184,7 +161,7 @@ const VerifyEmail = async (req: Request, res: Response) => {
             return res.status(400).json({ message: "User already verified!.. " });
         }
 
-        if (!user.verificationCodeExpiry || new Date(user.verificationCodeExpiry) <= new Date()) {
+        if (!user.verificationCodeExpiry || user.verificationCodeExpiry <= new Date()) {
             return res.status(400).json({ message: "Verification code has expired." });
         }
 
@@ -194,21 +171,24 @@ const VerifyEmail = async (req: Request, res: Response) => {
 
         const { accessToken, refreshToken } = await generateToken(user.id);
 
-        user.verified = true;
-        user.refreshToken = refreshToken;
-        user.verificationCode = undefined;
-        user.verificationCodeExpiry = undefined;
-        await user.save();
-
-        const userResponse = user.toJSON() as userType;
-        delete userResponse.password;
-        delete userResponse.verificationCode;
-        delete userResponse.verificationCodeExpiry;
-
+        const userResponse = await Users.findByIdAndUpdate(
+            user.id,
+            {
+                $set: {
+                    verified: true,
+                    refreshToken: refreshToken,
+                },
+                $unset: {
+                    verificationCode: 1,
+                    verificationCodeExpiry: 1
+                },
+            },
+            { new: true }
+        );
 
         return res.status(200)
-            .cookie("accessToken", accessToken, accessTokenOption)
-            .cookie("refreshToken", refreshToken, refreshTokenOption)
+            .cookie("accessToken", accessToken, Option.access)
+            .cookie("refreshToken", refreshToken, Option.refresh)
             .json({
                 user: userResponse,
                 success: true,
@@ -225,17 +205,15 @@ const VerifyEmail = async (req: Request, res: Response) => {
 };
 
 
-const resendVerificationCode = async (req: Request, res: Response) => {
+const ResendVerificationCode = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
-
-        if (!isValidObjectId(id)) {
+        if (!isValidObjectId(req.params.id)) {
             return res.status(400).json({ success: false, message: "Invalid user ID." });
         }
 
         const verificationCode = crypto.randomInt(100000, 999999);
 
-        const user = await Users.findByIdAndUpdate(id,
+        const user = await Users.findByIdAndUpdate(req.params.id,
             {
                 verificationCode,
                 verificationCodeExpiry: Date.now() + 60 * 60 * 1000,
@@ -250,7 +228,6 @@ const resendVerificationCode = async (req: Request, res: Response) => {
         //sent email with verification code
 
         return res.status(200).json({
-            user: user,
             success: true,
             message: "Verification code sent successfully.",
         });
@@ -280,8 +257,8 @@ const Logout = async (req: Request, res: Response) => {
         );
 
         return res.status(200)
-            .cookie("accessToken", accessTokenOption)
-            .cookie("refreshToken", refreshTokenOption)
+            .clearCookie("accessToken", Option.access)
+            .clearCookie("refreshToken", Option.refresh)
             .json({
                 success: true,
                 message: "User logged out successfully.",
@@ -313,7 +290,7 @@ const refreshAccessToken = async (req: Request, res: Response) => {
             process.env.REFRESH_TOKEN_SECRET as string
         ) as jwtToken;
 
-        const user = await Users.findById(decode.id).select("+refreshToken") as userType;
+        const user = await Users.findById(decode.id) as userType;
 
         if (!user) {
             return res.status(401).json({
@@ -332,8 +309,8 @@ const refreshAccessToken = async (req: Request, res: Response) => {
         const { accessToken, refreshToken } = await generateToken(user.id);
 
         return res.status(200)
-            .cookie("accessToken", accessToken, accessTokenOption)
-            .cookie("refreshToken", refreshToken, refreshTokenOption)
+            .cookie("accessToken", accessToken, Option.access)
+            .cookie("refreshToken", refreshToken, Option.refresh)
             .json({
                 success: true,
                 message: "Access token and refresh token updated successfully!..",
@@ -431,35 +408,31 @@ const forgetPassword = async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: "email is required!.." });
         }
 
-        const user = await Users.findOne({ email: email }).
-            select("+verificationCode +verificationCodeExpiry") as userType;
+        const user = await Users.findOne({ email: email });
 
         if (!user) {
-            return res.status(404).json({ success: false, message: "If a user exists, an OTP will be sent." });
+            return res.status(200).json({ message: "If this email exists, you will receive instructions." });
         }
 
-        if (user.verificationCodeExpiry && user.verificationCodeExpiry > new Date()) {
-            return res.status(400).json({
-                success: false,
-                message: "An OTP was recently sent. Please wait before requesting a new one."
-            });
-        }
+        const token = jwt.sign(
+            {
+                id: user.id,
+                email: user.email,
+            },
+            process.env.ACCESS_TOKEN_SECRET as string,
+            {
+                expiresIn: "1h"
+            }
+        );
 
-        const verificationCode = crypto.randomInt(100000, 999999);
-        user.verificationCode = verificationCode;
-        user.verificationCodeExpiry = new Date(Date.now() + 10 * 60 * 1000);
+        user.token = token;
         await user.save({ validateBeforeSave: false });
-
-        const userResponse = user.toJSON() as userType;
-        delete userResponse.verificationCode;
-        delete userResponse.verificationCodeExpiry;
 
         // send email with verificationCode...
 
-        return res.status(200).json({
+        return res.status(200).cookie("reset_token", token, Option.reset).json({
             success: true,
-            user: userResponse,
-            message: `OTP sent to ${user.email}`,
+            message: `An instruction sent to ${user.email}`,
         });
 
     } catch (error) {
@@ -470,83 +443,52 @@ const forgetPassword = async (req: Request, res: Response) => {
         });
     }
 
-};
-
-
-const verifyOtp = async (req: Request, res: Response) => {
-    try {
-        const { otp } = req.body;
-        const { id } = req.params;
-
-        if (!otp) {
-            return res.status(400).json({ success: false, message: "OTP is required." });
-        }
-
-        if (!isValidObjectId(id)) {
-            return res.status(400).json({ success: false, message: "Invalid user ID." });
-        }
-
-        const user = await Users.findById(id).select("+verificationCode +verificationCodeExpiry") as userType;
-
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found." });
-        }
-
-        if (user.verificationCode !== otp) {
-            return res.status(400).json({ success: false, message: "Invalid OTP." });
-        }
-
-        if (!user.verificationCodeExpiry || new Date(user.verificationCodeExpiry) <= new Date()) {
-            return res.status(400).json({ success: false, message: "OTP has expired." });
-        }
-
-        user.verificationCode = undefined;
-        user.verificationCodeExpiry = undefined;
-        await user.save({ validateBeforeSave: false });
-
-        return res.status(200).json({
-            user: user,
-            success: true,
-            message: "OTP verified successfully.",
-        });
-
-    } catch (error) {
-        console.error("Controller Error:", error);
-        return res.status(500).json({
-            success: false,
-            message: "An internal server error occurred.",
-        });
-    }
 };
 
 
 const resetPassword = async (req: Request, res: Response) => {
     try {
-        const { password } = req.body;
-        const { id } = req.params;
+        const token = req.cookies.reset_token || req.body.reset_token;
 
-        if (!isValidObjectId(id)) {
-            return res.status(400).json({ success: false, message: "Invalid user ID." });
+        if (!token) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized request!.."
+            });
         }
+
+        const decode = await jwt.verify(
+            token,
+            process.env.ACCESS_TOKEN_SECRET as string
+        ) as jwtToken;
+
+        const user = await Users.findById(decode.id).select("+token") as userType;
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid refresh token!.."
+            });
+        }
+
+        if (token !== user.token) {
+            return res.status(401).json({
+                success: false,
+                message: "Refresh token is expired or invalid!."
+            });
+        }
+
+        const password = req.body.password;
 
         if (!password) {
             return res.status(400).json({ success: false, message: "Password is required." });
         }
 
-        const user = await Users.findById(id).select("+password");
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found."
-            });
-        }
-
         user.password = password;
-        await user.save({ validateBeforeSave: false });
-        await Users.findByIdAndUpdate(id, { $unset: { refreshToken: 1 } });
+        user.token = "";
+        await user.save({ validateBeforeSave: true });
 
-        return res.status(200).json({
+        return res.status(200).clearCookie("reset_token").json({
             success: true,
             message: "Password reset successfully. Please sign in with your new password.",
         });
@@ -561,7 +503,7 @@ const resetPassword = async (req: Request, res: Response) => {
 };
 
 
-const updateAddress = async (req: Request, res: Response) => {
+const updateProfile = async (req: Request, res: Response) => {
     try {
         if (!req.auth || !req.auth.id) {
             return res.status(401).json({ success: false, message: "User not authenticated." });
@@ -608,12 +550,11 @@ export {
     getProfile,
     Logout,
     refreshAccessToken,
-    resendVerificationCode,
+    ResendVerificationCode,
     resetPassword,
     signin,
     signup,
     updateProfileImage,
     VerifyEmail,
-    verifyOtp,
-    updateAddress
+    updateProfile
 };

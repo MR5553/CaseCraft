@@ -13,7 +13,7 @@ import { formatDate } from "../lib/utils";
 
 
 export default function Profile() {
-    const { user, setUser } = useAuth();
+    const { user } = useAuth();
 
     const { register, handleSubmit, setValue, formState: { errors, isDirty, isValid, isSubmitting } } = useForm({ mode: "all", resolver: yupResolver(addressSchema), defaultValues: user.address });
 
@@ -57,7 +57,7 @@ export default function Profile() {
             const { data } = await api.put("api/auth/me/update", address);
 
             if (data.success) {
-                setUser(data.user)
+                // setUser(data.user)
                 toast.success(data.message);
             }
 

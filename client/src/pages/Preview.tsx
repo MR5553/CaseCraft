@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { ButtonVariants } from "../lib/ButtonVariant";
 import { BASE_PRICE } from "../lib/Constant";
 import { formatPrice } from "../lib/utils";
@@ -6,13 +7,12 @@ import { useAuth } from "../store/auth.store";
 import { Arrow } from "../components/Icons";
 import { toast } from "sonner";
 import { api } from "../lib/axios";
-import { useNavigate } from "react-router-dom";
 
 
 export default function Preview() {
     const { user, isAuthenticated } = useAuth();
     const { State, model, option } = useCanvas();
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
 
     const download = () => {
@@ -27,14 +27,12 @@ export default function Preview() {
     const handleCheckout = async () => {
         try {
             if (!isAuthenticated) {
-                toast.info("Please sign-in to make payment");
-                return;
+                return toast.info("Please Sign-in before checkout!")
             }
 
             const { address_line_1, address_line_2, city, country, landmark, pincode, state } = user.address;
             if (!address_line_1 || !address_line_2 || !city || !country || !landmark || !pincode || !state) {
-                toast.info("Please provide your address.");
-                return;
+                return toast.info("Please provide your address.");
             }
 
 
@@ -47,7 +45,6 @@ export default function Preview() {
             });
 
             if (!data.success) return toast.error("Failed to create order");
-            console.log(data)
 
             const options = {
                 key: import.meta.env.VITE_RAZORPAY_KEY_ID,

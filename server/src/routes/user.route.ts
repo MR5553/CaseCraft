@@ -5,14 +5,13 @@ import {
     getProfile,
     Logout,
     refreshAccessToken,
-    resendVerificationCode,
+    ResendVerificationCode,
     resetPassword,
     signin,
     signup,
-    updateAddress,
+    updateProfile,
     updateProfileImage,
     VerifyEmail,
-    verifyOtp
 } from "../controller/user.controller";
 
 
@@ -24,15 +23,14 @@ router.post("/signin", signin);
 router.post("/signout", verifyJwtToken, Logout);
 router.post("/refresh-token", refreshAccessToken);
 
-router.post("/verify-email/:token", VerifyEmail);
-router.post("/resend-verification-code/:userId", resendVerificationCode);
+router.post("/verify-email/:id", VerifyEmail);
+router.post("/resend-verification-code/:id", ResendVerificationCode);
 
-router.post("/forgot-password", forgetPassword);
-router.post("/verify-otp/:userId", verifyOtp);
-router.post("/reset-password/:token", resetPassword);
+router.put("/forgot-password", forgetPassword);
+router.post("/reset-password", resetPassword);
 
 router.get("/me", verifyJwtToken, getProfile);
 router.put("/me/image", verifyJwtToken, updateProfileImage);
-router.put("/me/update", verifyJwtToken, updateAddress);
+router.put("/me/update", verifyJwtToken, updateProfile);
 
 export default router;

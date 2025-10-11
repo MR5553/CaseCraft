@@ -23,7 +23,6 @@ api.interceptors.response.use((res) => res,
                 return api(originalRequest);
 
             } catch (refreshError) {
-                window.location.href = "/sign-in";
                 return Promise.reject(refreshError);
             }
         }

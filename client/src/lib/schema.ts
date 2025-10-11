@@ -9,9 +9,11 @@ export const signUpSchema = yup.object().shape({
         .email("Invalid email.")
         .required("Email required."),
     password: yup.string()
-        .min(8, "Password too short.")
-        .max(20, "Password too long.")
-        .required("Password required.")
+        .required("Password is required")
+        .min(8, "Password must be at least 8 characters long")
+        .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
+        .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+        .matches(/\d/, "Password must contain at least one number")
 });
 
 export const signInSchema = yup.object().shape({
@@ -19,9 +21,11 @@ export const signInSchema = yup.object().shape({
         .email("Invalid email.")
         .required("Email required."),
     password: yup.string()
-        .min(8, "Password too short.")
-        .max(20, "Password too long.")
-        .required("Password required.")
+        .required("Password is required")
+        .min(8, "Password must be at least 8 characters long")
+        .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
+        .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+        .matches(/\d/, "Password must contain at least one number")
 });
 
 export const emailSchema = yup.object().shape({
@@ -29,6 +33,21 @@ export const emailSchema = yup.object().shape({
         .email("Invalid email.")
         .required("Email required."),
 })
+
+export const resetPasswordSchema = yup.object({
+    password: yup
+        .string()
+        .required("Password is required")
+        .min(8, "Password must be at least 8 characters long")
+        .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
+        .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+        .matches(/\d/, "Password must contain at least one number"),
+
+    confirmPassword: yup
+        .string()
+        .required("Please confirm your password")
+        .oneOf([yup.ref("password")], "Passwords must match"),
+});
 
 export const phoneSchema = yup.string().required("Phone number is required").matches(/^[0-9]{10}$/, "Phone number must be 10 digits");
 

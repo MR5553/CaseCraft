@@ -21,7 +21,7 @@ app.use(morgan("tiny"));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(express.static("public"));
 app.use(CookieParser());
-const globalLimiter = rateLimit({
+app.use(rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 1000,
     message: {
@@ -30,9 +30,7 @@ const globalLimiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
-});
-app.use(globalLimiter);
-
+}));
 app.use(cors({
     origin: process.env.CLIENT_ORIGIN,
     credentials: true,
@@ -50,7 +48,7 @@ import orderRoute from "./routes/order.route";
 
 app.use("/api/auth", userRoute);
 app.use("/auth", authRoute);
-app.use("/api/model", modelRoute)
+app.use("/api/case", modelRoute)
 app.use("/api/payment", orderRoute)
 
 

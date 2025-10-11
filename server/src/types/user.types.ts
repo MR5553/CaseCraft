@@ -27,9 +27,10 @@ export interface userType extends Document {
     address: Address;
     providers: Provider[];
     refreshToken: string;
+    token: string;
     verified: boolean;
-    verificationCode: number | undefined;
-    verificationCodeExpiry: Date | undefined;
+    verificationCode: number;
+    verificationCodeExpiry: Date;
 
     generateRefreshToken(): string;
     generateAccessToken(): string;

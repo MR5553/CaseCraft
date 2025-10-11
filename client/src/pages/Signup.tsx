@@ -7,11 +7,14 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import Input from "../components/Input";
 import Button from "../components/Button";
 import SocialSignin from "../components/Social-Signin";
+import { toast } from "sonner";
+import { isAxiosError } from "axios";
+import { api } from "../lib/axios";
 
 
 export default function Signup() {
     const [visible, setVisible] = useState<boolean>(false);
-    const { Signup, user } = useAuth((state) => state);
+    const { setUser } = useAuth((state) => state);
     const navigate = useNavigate();
 
     const { register, handleSubmit, formState: { errors, isValid, isDirty, isSubmitting } } = useForm({
@@ -20,19 +23,30 @@ export default function Signup() {
     });
 
     const submit = async ({ name, email, password }: { name: string, email: string, password: string }) => {
-        await Signup(name, email, password);
+        try {
+            const { data } = await api.post("api/auth/signup", { name, email, password });
 
-        if (user) navigate(`/verifyemail/${user._id}`);
+            if (data.success) {
+                setUser(data.user);
+                toast.success(data.message);
+                navigate(`/verifyemail/${data.user._id}`)
+            }
+
+        } catch (error) {
+            if (isAxiosError(error) && error.response) {
+                toast.error(error.response.data.message);
+            }
+        }
     }
 
     return (
-        <section className="flex flex-col gap-4 items-center justify-center h-dvh">
+        <div className="max-w-[25rem] mx-auto flex flex-col gap-4 items-center justify-center h-dvh">
             <div className="flex gap-6 flex-col">
                 <div>
                     <h1 className="text-3xl font-bold text-neutral-800 tracking-wider">
                         Create your account
                     </h1>
-                    <p className="max-w-sm text-gray-500 font-normal mt-1">
+                    <p className="text-gray-500 font-normal mt-2">
                         Sign up to continue crafting, and showcasing your cases with ease.
                     </p>
                 </div>
@@ -86,12 +100,12 @@ export default function Signup() {
 
                 <p className="text-neutral-600 text-center">
                     Already have an account
-                    <Link to="/sign-in" className="pl-2 text-blue-500 underline underline-offset-4">
+                    <Link to="/sign-in" className="pl-2 font-medium text-blue-500 underline underline-offset-4">
                         Sign in
                     </Link>
                 </p>
 
             </div>
-        </section>
+        </div>
     )
 }

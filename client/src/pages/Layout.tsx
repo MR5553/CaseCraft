@@ -10,7 +10,7 @@ export function PIRVATE() {
     }
 
     if (user && !user.verified) {
-        return <Navigate to={`/verify-otp/${user._id}`} state={{ from: location }} replace />
+        return <Navigate to={`/verify-email/${user._id}`} state={{ from: location }} replace />
     }
 
     return <Outlet />

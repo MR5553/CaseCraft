@@ -58,7 +58,7 @@ export const useCanvas = create<state & action>((set) => ({
 
     getAllModels: async () => {
         try {
-            const { data } = await api.get(`/api/model/models`);
+            const { data } = await api.get(`/api/case/models`);
 
             if (data.success) {
                 set({ models: data.models });

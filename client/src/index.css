@@ -135,3 +135,10 @@ div[popover] {
   margin-top: 5px;
   transform: translate(-50%);
 }
+
+dialog {
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+  }
+}

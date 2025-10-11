@@ -8,11 +8,8 @@ export interface userState {
 };
 
 export interface action {
-    SignIn: (email: string, password: string) => Promise<void>;
-    Signup: (name: string, email: string, password: string) => Promise<void>;
+    setUser: (user: userType) => void;
     getProfile: () => Promise<void>;
+    SignOut: () => Promise<void>;
     setHydrated: () => void;
-    SignOut: () => void;
-    ResendVerification: () => void;
-    setUser: (user: userState["user"]) => void;
 };

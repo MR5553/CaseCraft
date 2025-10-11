@@ -4,10 +4,13 @@ import Input from "../components/Input";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { emailSchema } from "../lib/schema";
 import { api } from "../lib/axios";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { isAxiosError } from "axios";
+import { Arrow } from "../components/Icons";
+import { ButtonVariants } from "../lib/ButtonVariant";
 
-export default function ForgetPassword() {
+export default function ForgotPassword() {
     const navigate = useNavigate();
 
     const { handleSubmit, register, formState: { isDirty, errors, isSubmitting, isValid } } = useForm({
@@ -18,30 +21,29 @@ export default function ForgetPassword() {
 
     const submit = async ({ email }: { email: string }) => {
         try {
-            const { data } = await api.post("/api/auth/forget-password", { email });
+            const { data } = await api.put("/api/auth/forgot-password", { email });
 
             if (data.success) {
-                navigate(`/verify-otp/${data.id}`);
-
                 toast.success(data.message);
+                navigate(`/reset-password`);
             }
 
         } catch (error) {
-            toast.error("Error while reset password")
-            console.log(error)
+            if (isAxiosError(error) && error.response) {
+                toast.error(error.response.data.message);
+            }
         }
     }
 
     return (
-        <section className="flex flex-col gap-4 items-center justify-center h-dvh">
+        <div className="max-w-[25rem] mx-auto flex flex-col gap-4 items-center justify-center h-dvh">
             <div className="flex gap-6 flex-col">
                 <div>
-                    <h1 className="text-3xl font-semibold text-neutral-800 tracking-wider">
-                        Forget password
+                    <h1 className="text-3xl font-bold text-neutral-800 tracking-wider">
+                        Forgot password
                     </h1>
-                    <p className="max-w-[40ch] text-neutral-500 font-normal mt-4">
-                        1. Please enter your email address blow 👇 <br />
-                        2. We'll send you OTP to reset your password.
+                    <p className="text-gray-500 font-normal mt-2">
+                        No worries, we'll send you reset instruction to provide below email 📩
                     </p>
                 </div>
 
@@ -67,8 +69,14 @@ export default function ForgetPassword() {
                         Continue
                     </Button>
 
+                    <Link to="/sign-in" className={ButtonVariants({ size: "sm" })}
+                    >
+                        <Arrow className="text-black size-6 rotate-180" />
+                        back to sign-in
+                    </Link>
+
                 </form>
             </div>
-        </section>
+        </div>
     )
 };
