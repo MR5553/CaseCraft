@@ -1,7 +1,8 @@
 import { Response, Request, Router } from "express";
 import passport from "passport";
 import { userType } from "../types/user.types";
-import { generateToken, refreshTokenOption, accessTokenOption } from "../controller/user.controller";
+import { generateToken } from "../controller/user.controller";
+import Option from "../utils/Cookie";
 
 
 const router = Router();
@@ -17,8 +18,8 @@ router.get("/github/callback", passport.authenticate("github", { session: false,
 
             return res
                 .status(200)
-                .cookie("accessToken", accessToken, accessTokenOption)
-                .cookie("refreshToken", refreshToken, refreshTokenOption)
+                .cookie("accessToken", accessToken, Option.access)
+                .cookie("refreshToken", refreshToken, Option.refresh)
                 .redirect(`${process.env.CLIENT_ORIGIN}${URL}`)
 
         } catch (error) {
@@ -43,8 +44,8 @@ router.get("/google/callback", passport.authenticate("google", { session: false,
 
             return res
                 .status(200)
-                .cookie("accessToken", accessToken, accessTokenOption)
-                .cookie("refreshToken", refreshToken, refreshTokenOption)
+                .cookie("accessToken", accessToken, Option.access)
+                .cookie("refreshToken", refreshToken, Option.refresh)
                 .redirect(`${process.env.CLIENT_ORIGIN}${URL}`)
 
         } catch (error) {
