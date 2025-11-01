@@ -15,9 +15,9 @@ export const verifyJwtToken = async (req: Request, res: Response, next: NextFunc
             });
         }
 
-        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as jwtToken;
+        const verifyToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as jwtToken;
 
-        const user = await Users.findOne({ $or: [{ "_id": decoded.id }, { "email": decoded.email }] });
+        const user = await Users.findOne({ $or: [{ "_id": verifyToken.id }, { "email": verifyToken.email }] });
 
         if (!user) {
             return res.status(404).json({

@@ -20,7 +20,6 @@ const userSchema = new Schema<userType>({
     },
     phone: {
         type: String,
-        unique: true,
         trim: true,
         match: [/^\d{10}$/, "Please fill a valid 10-digit phone number."],
         sparse: true
@@ -97,7 +96,7 @@ userSchema.pre("save", async function (next) {
     next();
 });
 
-userSchema.methods.passwordValidation = async function (password: string) {
+userSchema.methods.verifyPassword = async function (password: string) {
     if (this.password) {
         return await bcrypt.compare(password, this.password);
     }
