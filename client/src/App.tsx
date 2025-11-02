@@ -23,7 +23,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword.tsx"));
 const router = createBrowserRouter([
   {
     path: "/",
-    // element: <PIRVATE />,
+    element: <PIRVATE />,
     children: [
       { index: true, element: <Home /> },
       {
